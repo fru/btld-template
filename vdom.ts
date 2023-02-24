@@ -6,17 +6,19 @@ export class Vdom {
     tag: string;
     dom: HTMLElement;
     domListener: {[event: string]: DomListener[]};
+    
+    webComponents: HTMLElement[];
+    webComponentsListener: (added: HTMLElement) => void;
 
     root: VdomRoot;
     parent: Vdom;
     attrs: {[attr: string]: ContentExp[]} = {};
 
     // Order of precedence:
-    content: ContentExp[] | InnerHTML;
     children: Vdom[] = [];
+    content: ContentExp[] | InnerHTML;
 
     detached: {[mixin: string]: boolean}
-    detachedIfNotFirst: string;
     mixin: string;
     mixinDisabledDefaultRenderer: string;
     
@@ -53,8 +55,7 @@ function vdomApi(that: Vdom) {
         get detached() { return that.detached[that.mixin]; },
         set detached(d) { that.detached[that.mixin] = d; },
         setDetachedIfNotFirst(key: string) {
-            that.detachedIfNotFirst = key || '';
-            // Check and change dom
+            throw 'Not implemented exception - do else later';
         },
         isAnyDetached() {
             // Check detached if not first
@@ -68,6 +69,9 @@ function vdomApi(that: Vdom) {
             // Get previous + Update state
             // Trigger Listeners
             // Propagate down unless it was set down locally
+        },
+        setProperty(key: string, value: unknown) {
+            that.dom && (that.dom[key] = value);
         },
         addStateListener(key: string, listener: StateListener) {
             that.stateListener[key] = that.stateListener[key] || [];
@@ -92,6 +96,7 @@ function vdomApi(that: Vdom) {
         },
 
         setContent(content: ContentExp[] | InnerHTML) {
+            if (that.children.length) return; // cant override children
             // mainly used by i18n
             // maybe split into two functions: setContent Exp | HTML
             // detach all old listeners
@@ -105,6 +110,9 @@ function vdomApi(that: Vdom) {
 
         disableDefaultRenderer() {
             that.mixinDisabledDefaultRenderer = that.mixin;
+        },
+        queryFirstDetached() {
+            // Get the first child that was detached by this mixin 
         }
     }
 }
