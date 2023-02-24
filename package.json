@@ -1,0 +1,15 @@
+{
+  "name": "btld-template",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bench": "playwright-test bench.js --runner benchmark"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright-test": "^8.2.0"
+  }
+}
