@@ -1,8 +1,6 @@
 export interface Definition {
   // Parsed: tag attr string paths
-  createVdom(root: VdomRoot): Vdom {
-
-  }
+  createVdom(root: VdomRoot, state: { [key: string]: unknown }): Vdom;
 }
 
 function root() {
@@ -16,6 +14,8 @@ export class Vdom {
   dom: HTMLElement;
   domListener: { [event: string]: DomListener[] };
 
+  // TODO - contains all the webcomponents added to vdom - does this make sense?
+  // Do we need this to pass default parameters to all web components
   webComponents: HTMLElement[];
   webComponentsListener: (added: HTMLElement) => void;
 
@@ -29,37 +29,46 @@ export class Vdom {
   contentDom: Node[];
 
   getDomChildren(): Node[] {
-    if (this.children) {
-      return this.children.flatMap(c => c.dom || c.getDomChildren());
+    if (this.children.length) {
+      return this.children.flatMap((c) => c.dom || c.getDomChildren());
     }
     return this.contentDom || [];
   }
 
-  getDomParent(): HTMLElement | undefined {
-    let parent = this.parent;
+  reattachToDom() {
+    let getNode = (vdom: Vdom) => vdom.dom || vdom.contentDom?.[0];
+
+    function getNextDeep({ children }: Vdom, start: number): Node | null {
+      for (let i = start; i < children.length; i++) {
+        if (!children[i].api.isDetached()) {
+          let next = getNode(children[i]) || getNextDeep(children[i], 0);
+          if (next) return next;
+        }
+      }
+      return null;
+    }
+
+    let next: Node | null = null;
+    let current: Vdom = this;
+
     do {
-      if (parent.dom) return parent.dom;
-    } while (parent = parent.parent);
-  }
+      let index = current.parent?.children.indexOf(current);
+      if (!next) next = getNextDeep(current.parent, index + 1);
+      current = current.parent;
+    } while (current && !current.dom);
 
-  getDomPrevious(): HTMLElement | undefined {
+    // TODO handle vdom without .dom and .tag !!!!!!!!!!!!
+    // Use getDomChildren();
 
+    current?.dom.insertBefore(this.dom, next);
   }
 
   createChild() {
     let wrapper = new Vdom();
     wrapper.root = this.root;
     wrapper.parent = this;
+    wrapper.state = { ...this.state };
     return wrapper;
-  }
-
-  reattachToDom() {
-    let previous = this.getDomPrevious();
-    if (previous) {
-      previous.before(this.dom);
-    } else {
-      this.getDomParent()?.prepend(this.dom);
-    }
   }
 
   detached: { [mixin: string]: boolean };
@@ -107,7 +116,7 @@ export class Vdom {
     append: (definition?: Definition) => {
       let created: Vdom;
       if (definition) {
-        created = definition.createVdom(this.root);
+        created = definition.createVdom(this.root, this.state);
       } else {
         created = this.createChild();
       }
@@ -125,9 +134,13 @@ export class Vdom {
     },
 
     setState: (key: string, value: unknown) => {
-      // Get previous + Update state
-      // Trigger Listeners
-      // Propagate down unless it was set down locally
+      let previous = this.state[key];
+      if (value === previous) return;
+      this.state[key] = value;
+      for (var l of this.stateListener[key]) l(value, previous);
+      for (var c of this.children) {
+        if (c.state[key] === previous) c.api.setState(key, value);
+      }
     },
     setProperty: (key: string, value: unknown) => {
       this.dom && (this.dom[key] = value);
@@ -137,13 +150,14 @@ export class Vdom {
       this.stateListener[key].push(listener);
     },
 
+    // TODO handle content placeholder + (re)create listeners
+
     setAttribute: (name: string, value: ContentExp[]) => {
       // detach all old listeners
       this.attrs[name] = value;
       // set atttribute on dom
       // reattach listeners
     },
-
     setContent: (content: ContentExp[] | InnerHTML) => {
       if (this.children.length) return; // cant override children
       // mainly used by i18n
@@ -161,13 +175,15 @@ export class Vdom {
       this.mixinDisabledDefaultRenderer = this.mixin;
     },
     queryFirstDetached: () => {
-      // Get the first child that was detached by this mixin
+      for (let c of this.children) {
+        if (c.api.isDetachedByMixin()) return c;
+      }
     },
   };
 }
 
 type DomListener = (...args: any[]) => void;
-type StateListener = (before: unknown, after: unknown) => void;
+type StateListener = (after: unknown, before: unknown) => void;
 type VdomRoot = { vdom: Vdom };
 type ContentExp = string | { path: string[]; listener: StateListener };
 type InnerHTML = string;
