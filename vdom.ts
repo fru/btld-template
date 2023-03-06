@@ -16,6 +16,7 @@ export class Vdom {
 
   // TODO - contains all the webcomponents added to vdom - does this make sense?
   // Do we need this to pass default parameters to all web components
+  // Can we do this with innerHTML
   webComponents: HTMLElement[];
   webComponentsListener: (added: HTMLElement) => void;
 
@@ -57,10 +58,33 @@ export class Vdom {
       current = current.parent;
     } while (current && !current.dom);
 
-    // TODO handle vdom without .dom and .tag !!!!!!!!!!!!
-    // Use getDomChildren();
+    let nodes = this.getDomChildren();
+    for (let node of nodes) current?.dom.insertBefore(node, next);
+  }
 
-    current?.dom.insertBefore(this.dom, next);
+  getPathValue(path: string[]): unknown[] {
+    // Get path value 
+    // Use mapping function in state to get array of values
+    // If node return otherwise toString()
+    return [];
+  }
+
+  concatinateIntoString(value: any) {
+
+  }
+
+  bindValueExp(values: ContentExp[], callback: (value: unknown) => void) {
+    let result = values.slice();
+    for (let i = 0; i < result.length; i++) {
+      if (typeof result[i] === 'string') continue;
+      let {path} = values[i];
+      let setter = () => result[i] = this.getPathValue(path);
+    }
+    // TODO add listeners
+  }
+
+  unbindValueExp(value: ContentExp[]) {
+    // TODO
   }
 
   createChild() {
@@ -153,10 +177,11 @@ export class Vdom {
     // TODO handle content placeholder + (re)create listeners
 
     setAttribute: (name: string, value: ContentExp[]) => {
-      // detach all old listeners
+      if (this.attrs[name]) this.unbindValueExp(this.attrs[name]);
       this.attrs[name] = value;
-      // set atttribute on dom
-      // reattach listeners
+      this.bindValueExp(this.attrs[name], (content) => {
+        this.dom?.
+      });
     },
     setContent: (content: ContentExp[] | InnerHTML) => {
       if (this.children.length) return; // cant override children
