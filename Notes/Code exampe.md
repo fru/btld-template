@@ -1,22 +1,19 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T21:19:38+03:00
+modified: 2023-03-08T21:29:38+03:00
 ---
 
 # Code exampe
 
 ```ts
+type VdomListener = (after: any, before: any) => void;
+type VdomPathParsed = {p: string, ref?: true, l?: VdomListener}[];
 let parsePath = (s: string) => s.split('.').map(p => {
   if (!p.startsWith(':')) return {p};
   return {p: p.substring(1), ref: true};
 });
 
-function parsePath(s: string): VdomPathParsed {
-s.splitt('.').map(x =>
-if (x.startsWith
-if (x.matches
-   return ['']; 
- } 
+let parsePathErrorCheck = 
   
  function parseText(s: string): VdomContent[] {
    S.match(${})
@@ -31,7 +28,7 @@ if (x.matches
   
   
   
- type VdomStateListener = (after: any, before: any) => void; 
+ 
  // Every listener is in a path or managed by a mixin 
  type VdomPathParsed = (string | {ref: string})[]; 
  type VdomPath = {path: VdomPathParsed, listener: VdomStateListener};
