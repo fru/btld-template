@@ -1,6 +1,6 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T18:36:00+03:00
+modified: 2023-03-08T18:38:35+03:00
 ---
 
 # Code exampe
@@ -49,9 +49,7 @@ if (x.matches
    attrs: {[attr: string]: VdomAttrPart[]} = {}; 
   
    // This shouldn't be needed as this would mean replaceChildren
-   rerenderContent: boolean = false; 
-    
-   // ??? Expose api as state?? 
+   rerenderContent: boolean = false;
   
    setState = () => { 
      // Update state 
