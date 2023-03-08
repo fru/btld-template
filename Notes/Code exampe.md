@@ -1,6 +1,6 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T21:35:36+03:00
+modified: 2023-03-08T22:11:34+03:00
 ---
 
 # Code exampe
@@ -14,7 +14,11 @@ let parsePath = (s: string): Path => s.split('.').map(p => {
   return {p: p.substring(1), ref: true};
 });
 
-let parsePathErrorCheck = 
+let validatePath = (path: Path, i: number = 0) => {
+  if (!path[i].p.match(/^[^\s<>:+\/]+$/)) throw 'path-syntax';  
+  return i < path.length ? validatePath(path, i+1) : path;
+};
+
   
  function parseText(s: string): VdomContent[] {
    S.match(${})
