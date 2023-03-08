@@ -1,6 +1,6 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T22:11:34+03:00
+modified: 2023-03-08T22:20:53+03:00
 ---
 
 # Code exampe
@@ -15,15 +15,15 @@ let parsePath = (s: string): Path => s.split('.').map(p => {
 });
 
 let validatePath = (path: Path, i: number = 0) => {
-  if (!path[i].p.match(/^[^\s<>:+\/]+$/)) throw 'path-syntax';  
+  if (!path[i].p.match(/^[^\s<>:+\/]+$/)) throw 'path-syntax';
   return i < path.length ? validatePath(path, i+1) : path;
 };
 
-  
- function parseText(s: string): VdomContent[] {
-   S.match(${})
-   return {content: []}; 
- } 
+type Content = {dom: Node[] | Vdom, producer?: Path};
+let parseText => (s: string): Content[] {
+  s.match(\$\{[^\s<>]+\})
+  return {dom: []};
+} 
   
  function parseTemplate(s: string): Vdom {
    if (s.contains('<') document.createElement('template')
