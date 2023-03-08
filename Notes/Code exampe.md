@@ -1,11 +1,16 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T18:38:35+03:00
+modified: 2023-03-08T21:19:38+03:00
 ---
 
 # Code exampe
 
 ```ts
+let parsePath = (s: string) => s.split('.').map(p => {
+  if (!p.startsWith(':')) return {p};
+  return {p: p.substring(1), ref: true};
+});
+
 function parsePath(s: string): VdomPathParsed {
 s.splitt('.').map(x =>
 if (x.startsWith
@@ -13,7 +18,7 @@ if (x.matches
    return ['']; 
  } 
   
- function parseText(s: string): VdomContent {
+ function parseText(s: string): VdomContent[] {
    S.match(${})
    return {content: []}; 
  } 
