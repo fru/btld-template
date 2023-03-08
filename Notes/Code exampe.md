@@ -1,13 +1,13 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T21:29:38+03:00
+modified: 2023-03-08T21:30:31+03:00
 ---
 
 # Code exampe
 
 ```ts
 type VdomListener = (after: any, before: any) => void;
-type VdomPathParsed = {p: string, ref?: true, l?: VdomListener}[];
+type VdomPath = {p: string, ref?: true, l?: VdomListener}[];
 let parsePath = (s: string) => s.split('.').map(p => {
   if (!p.startsWith(':')) return {p};
   return {p: p.substring(1), ref: true};
