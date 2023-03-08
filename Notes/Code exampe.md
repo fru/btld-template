@@ -1,20 +1,26 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T18:22:07+03:00
+modified: 2023-03-08T18:36:00+03:00
 ---
 
 # Code exampe
 
 ```ts
-function parsePath(s: string): VdomPathParsed { 
+function parsePath(s: string): VdomPathParsed {
+s.splitt('.').map(x =>
+if (x.startsWith
+if (x.matches
    return ['']; 
  } 
   
- function parseText(s: string): VdomContent { 
+ function parseText(s: string): VdomContent {
+   S.match(${})
    return {content: []}; 
  } 
   
- function parseTemplate(s: string): Vdom { 
+ function parseTemplate(s: string): Vdom {
+   if (s.contains('<') document.createElement('template')
+   else new Vdom(parseText(s))
    return new Vdom(); 
  } 
   
