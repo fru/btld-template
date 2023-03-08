@@ -1,6 +1,6 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T17:38:15+03:00
+modified: 2023-03-08T18:22:07+03:00
 ---
 
 # Code exampe
@@ -42,7 +42,7 @@ function parsePath(s: string): VdomPathParsed {
    listeners: {[key: string]: VdomStateListener[]} = {}; 
    attrs: {[attr: string]: VdomAttrPart[]} = {}; 
   
-   // Is this need - or is every change directly mirrored? 
+   // This shouldn't be needed as this would mean replaceChildren
    rerenderContent: boolean = false; 
     
    // ??? Expose api as state?? 
