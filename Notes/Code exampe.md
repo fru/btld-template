@@ -1,6 +1,6 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T17:34:54+03:00
+modified: 2023-03-08T17:35:21+03:00
 ---
 
 # Code exampe
@@ -66,4 +66,5 @@ function parsePath(s: string): VdomPathParsed {
   
    setContent = () => {} 
    addListener = () => {} 
- }```
+ }
+```
