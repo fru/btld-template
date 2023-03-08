@@ -1,6 +1,6 @@
 ---
 created: 2023-03-08T17:32:40+03:00
-modified: 2023-03-08T21:31:58+03:00
+modified: 2023-03-08T21:35:36+03:00
 ---
 
 # Code exampe
@@ -8,7 +8,8 @@ modified: 2023-03-08T21:31:58+03:00
 ```ts
 type StateListener = (after: any, before: any) => void;
 type Path = {p: string, ref?: true, l?: StateListener}[];
-let parsePath = (s: string) => s.split('.').map(p => {
+
+let parsePath = (s: string): Path => s.split('.').map(p => {
   if (!p.startsWith(':')) return {p};
   return {p: p.substring(1), ref: true};
 });
