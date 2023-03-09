@@ -15,19 +15,20 @@ type Path = { p: string, ref?: true, l?: StateListener }[];
 type Content = { dom: Node[] | Vdom, producer?: Path };
 
 const logo = 
-  'background-color:#222222;border-radius:3px;padding:1px 6px;' + 
-  'font-size:11px;font-weight:900;color:#dc3545';
+  'padding:1px 6px;border-radius:3px;color:#dc3545;' + 
+  'font-size:11px;font-weight:900;background-color:#222222';
 
-const highlight =
-  'background-color:rgba(255,0,0,0.2);border-bottom: 1px solid red';
+const highlight = 
+  'padding:0px 2px;border-radius:3px;color:#aa0000;' + 
+  'font-size:11px;font-weight:900;background-color:#ffc0cb';
 
 function error(error, segments) {
   let colors = segments.map((_,i) => i % 2 ? highlight : '');
   let msg = '%cBTLD%c ' + error + ': %c' + segments.join('%c');
-  console.warn(msg, logo, '', ...colors);
+  console.error(msg, logo, '', ...colors);
 }
 
-error('Unexpected token', ['','123','test'])
+error('Unexpected token', ['test.','123','.test'])
 
 
 console.warn('%c Unexpected char in expression: %c.123%ctest.', logo, '', highlight, ''); 
