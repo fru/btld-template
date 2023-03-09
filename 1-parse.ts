@@ -19,8 +19,8 @@ const logo =
   'font-size:11px;font-weight:900;background-color:#222222';
 
 const highlight = 
-  'padding:0px 2px;border-radius:3px;color:#aa0000;' + 
-  'font-size:11px;font-weight:900;background-color:#ffc0cb';
+  'padding:0px 3px;border-radius:3px;color:#990000;' + 
+  'font-size:11px;font-weight:900;background-color:#ffd6dd';
 
 function error(error, segments) {
   let colors = segments.map((_,i) => i % 2 ? highlight : '');
