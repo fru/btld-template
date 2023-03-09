@@ -5,35 +5,7 @@ modified: 2023-03-08T22:20:53+03:00
 
 # Code exampe
 
-```ts
-type StateListener = (after: any, before: any) => void;
-type Path = {p: string, ref?: true, l?: StateListener}[];
-
-let parsePath = (s: string): Path => s.split('.').map(p => {
-  if (!p.startsWith(':')) return {p};
-  return {p: p.substring(1), ref: true};
-});
-
-let validatePath = (path: Path, i: number = 0) => {
-  if (!path[i].p.match(/^[^\s<>:+\/]+$/)) throw 'path-syntax';
-  return i < path.length ? validatePath(path, i+1) : path;
-};
-
-type Content = {dom: Node[] | Vdom, producer?: Path};
-let parseText => (s: string): Content[] {
-  s.match(\$\{[^\s<>]+\})
-  return {dom: []};
-} 
-  
- function parseTemplate(s: string): Vdom {
-   if (s.contains('<') document.createElement('template')
-   else new Vdom(parseText(s))
-   return new Vdom(); 
- } 
-  
-  
-  
- 
+```ts 
  // Every listener is in a path or managed by a mixin 
  type VdomPathParsed = (string | {ref: string})[]; 
  type VdomPath = {path: VdomPathParsed, listener: VdomStateListener};
