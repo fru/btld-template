@@ -14,17 +14,13 @@ type StateListener = (after: any, before: any) => void;
 type Path = { p: string, ref?: true, l?: StateListener }[];
 type Content = { dom: Node[] | Vdom, producer?: Path };
 
-const logo = 
-  'padding:1px 6px;border-radius:3px;color:#dc3545;' + 
-  'font-size:11px;font-weight:900;background-color:#222222';
-
-const highlight = 
-  'padding:0px 3px;border-radius:3px;color:#990000;' + 
-  'font-size:11px;font-weight:900;background-color:#ffd6dd';
+const box = 'padding:0 3px;border-radius:3px;font-weight:900;';
+const logo = box + 'color:#f4bec3;background-color:#3d0b10';
+const highlight = box + 'color:#990000;background-color:#ffccd5';
 
 function error(error, segments) {
   let colors = segments.map((_,i) => i % 2 ? highlight : '');
-  let msg = '%cBTLD%c ' + error + ': %c' + segments.join('%c');
+  let msg = '%cbtld-template%c ' + error + ': %c' + segments.join('%c');
   console.error(msg, logo, '', ...colors);
 }
 
