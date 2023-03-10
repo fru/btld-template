@@ -52,7 +52,7 @@ const parse = (s: string): Path => s.split('.').map(p => {
 ```
 
 
-```typescript
+```typescript test
 function check(p: Path) {
   const r = '';//;
 }
