@@ -9,7 +9,6 @@
  *    'test123', ':123', '123test', '..', ''
  */
 
-interface Vdom { getNodes(): Node[] }
 type StateListener = (after: any, before: any) => void;
 type Path = { p: string, ref?: true, l?: StateListener }[];
 type Content = { dom: Node[] | Vdom, producer?: Path };
@@ -18,13 +17,35 @@ const box = 'padding:0 3px;border-radius:3px;font-weight:900;';
 const logo = box + 'color:#f4bec3;background-color:#3d0b10';
 const highlight = box + 'color:#990000;background-color:#ffccd5';
 
-function error(error, segments) {
+function error(error: string, segments: string[]) {
   let colors = segments.map((_,i) => i % 2 ? highlight : '');
   let msg = '%cbtld-template%c ' + error + ': %c' + segments.join('%c');
   console.error(msg, logo, '', ...colors);
 }
 
-error('Unexpected token', ['test.','123','.test'])
+// Call via: error('Unexpected token', ['test.','123','.test'])
+
+const parse = (s: string): Path => s.split('.').map(p => {
+  if (!p.startsWith(':')) return {p};
+  return {p: p.substring(1), ref: true};
+});
+
+function check(p: Path) {
+  const r = '';//;
+}
+
+// What interface would be need to build the Vdom?
+interface Vdom { getNodes(): Node[] }
+
+
+// What attributes are mixins?
+
+
+
+
+
+
+
 
 
 console.warn('%c Unexpected char in expression: %c.123%ctest.', logo, '', highlight, ''); 
