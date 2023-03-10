@@ -17,3 +17,6 @@ function define(tag, extend, prototype) {
 	Object.setPrototypeOf(BtldWrapper.prototype, ExtendClass.prototype);
 	customElements.define(tag, BtldWrapper, extend ? {extends: extend} : {});
 }
+
+
+// Custom elements without class
