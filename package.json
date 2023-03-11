@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "bench": "playwright-test bench.js --runner benchmark"
+    "bench": "playwright-test benchmark/bench1.js --runner benchmark"
   },
   "author": "",
   "license": "ISC",
