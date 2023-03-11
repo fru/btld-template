@@ -4,7 +4,7 @@
 type StateListener = (after: any, before: any) => void;
 type Path = { p: string; ref?: true }[];
 type PathWithListener = { path: Path; listener?: StateListener };
-type Content = { dom: Node[] | Vdom; producer?: Path };
+type Content = { nodes: Node[] | VNode; producer?: Path };
 ```
 
 ```typescript
@@ -51,7 +51,7 @@ function check(p: Path) {
 
 ```typescript
 // What interface would be need to build the Vdom?
-interface Vdom { getNodes(): Node[] }
+interface VNode { getNodes(): Node[] }
 
 // What attributes are mixins?
 

@@ -14,5 +14,9 @@
     },
     "files.exclude": {
         "**/node_modules": true
-    }
+    },
+    "prettier.singleQuote": true,
+    "prettier.proseWrap": "always",
+    "prettier.arrowParens": "avoid",
+    
 }
