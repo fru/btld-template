@@ -1,4 +1,94 @@
-# BTLD parser and error handling
+# BTLD Parser
+
+This file has the parsers for the btld templating engine. We also define the
+virtual dom which acts as the intermediate representation (IR) and also holdes
+the state, listeners and functionality used during the runtime in the browser.
+
+## Imports
+
+```typescript
+import { nodeNeedsContainer, createContainer } from './0-main';
+```
+
+TODO can this be one function?
+
+TODO maybe we can extract the actual vdom build into a 2-api.md and also call
+check to throw errors? There we could also add any dom restructuring functions
+used by mixins and call state listeners.
+
+## Virtual dom tree structure
+
+The virtual dom is made of `VContainer` and `VNode` instances. The container
+holds the state, it knows if it is detached by a mixin and it can be cloned
+(including dom and state listeners). VNode instances form a mostly static tree
+of dom nodes, both text or tags.
+
+At the root of this virtual dom is allways a dynamic VContainer with static
+VNode children. In order for mixins or state mapping functions to create more
+dynamic dom we can assign a VContainer to replace existing content of a VNode.
+This allows for well defined alternating layeres of dynamic containers and
+static nodes.
+
+VContainers have the property `nodeList` which holds a flat list of all the
+VNodes that are managed by the container, ordered by the precedence in the dom.
+The VNode order is static and can't be changed after creation. So the index in
+this array gives an easy way to `id` VNodes given a specific VContainer. This is
+usefull if we want to reattach dom listeners etc. on cloning. Also this list
+makes it easier to find the previous sibling of a VContainer. Just traverse the
+`VContainer.parent.container.nodeList` to find the sibling VNode that is static.
+
+```typescript
+abstract class VContainer {
+  nodeList: VNode[]; // Complete list of nodes in container
+  rootList: VNode[]; // Just the root level nodes
+  parent: VNode;
+}
+
+class VNode {
+  // Priority Case: Dynamic VContainer
+  vdom: VContainer;
+
+  // Fallback Case: Static dom node tree
+  content: Node;
+  children: VNode[];
+  parent: VNode;
+
+  // Structure
+  container: VContainer;
+  id: number;
+
+  // Helper
+  isStatic = () => !this.vdom;
+  isCustomElement() {
+    return this.isStatic() && this.content?.tagName?.includes('-');
+  }
+}
+```
+
+TODO should isCustomElement be defined later?
+
+## Path Expression
+
+Exp: 'test.2.:a'
+
+Text: 'Test ${test.2.:a} Test'
+
+Error cases unexpected-token: 'test123', ':123', '123test', '..', ''
+
+## Populating the virtual dom from html templates
+
+## Attach state listeners
+
+-
+
+-
+
+# OLD !!!!!!!!!
+
+Extract Error handling to utils
+
+Every VNode is created once and then doesn't get moved around. It has a closest
+Vdom instance which does not change.
 
 ```typescript
 type StateListener = (after: any, before: any) => void;
@@ -8,15 +98,15 @@ type Content = { nodes: Node[] | VNode; producer?: Path };
 ```
 
 ```typescript
-const box = "padding:0 3px;border-radius:3px;font-weight:900;";
-const logo = box + "color:#f4bec3;background-color:#3d0b10";
-const highlight = box + "color:#990000;background-color:#ffccd5";
+const box = 'padding:0 3px;border-radius:3px;font-weight:900;';
+const logo = box + 'color:#f4bec3;background-color:#3d0b10';
+const highlight = box + 'color:#990000;background-color:#ffccd5';
 
 function error(error: string, segments: string[]) {
-  let colors = segments?.map((_, i) => (i % 2 ? highlight : ""));
-  let msg = "%cbtld-template%c " + error;
-  if (segments) msg += ": %c" + segments.join("%c");
-  console.error(msg, logo, "", ...(colors || []));
+  let colors = segments?.map((_, i) => (i % 2 ? highlight : ''));
+  let msg = '%cbtld-template%c ' + error;
+  if (segments) msg += ': %c' + segments.join('%c');
+  console.error(msg, logo, '', ...(colors || []));
 }
 ```
 
@@ -35,17 +125,9 @@ Called via `error('Unexpected token', ['test.','123','.test'])`
  */
 ```
 
-```typescript
-const parse = (s: string): Path =>
-  s.split(".").map((p) => {
-    if (!p.startsWith(":")) return { p };
-    return { p: p.substring(1), ref: true };
-  });
-```
-
 ```typescript test
 function check(p: Path) {
-  const r = ""; //;
+  const r = ''; //;
 }
 ```
 
