@@ -26,10 +26,13 @@ makes it easier to find the previous sibling of a VContainer. Just traverse the
 `VContainer.parent.container.nodes` to find the sibling VNode that is static.
 
 ```typescript
+type Path = { p: string; ref?: true }[];
+type ParsedText = { text?: string; path: Path }[];
+
 class VContainer {
-  nodes: VNode[]; // Complete list of nodes in container
+  nodes: VNode[] = []; // Complete list of nodes in container
   parent: VNode;
-  append: VNode; // Used during initialization - new nodes are appended here
+  attrs: { [key: string]: ParsedText };
 }
 
 class VNode {
@@ -38,8 +41,9 @@ class VNode {
 
   // Static Case: Consistent node tree, used if there is no vdom
   content: Node;
-  children: VNode[];
+  children: VNode[] = [];
   parent: VNode;
+  attrs: { [key: string]: ParsedText };
 
   // Structure
   container: VContainer;
@@ -47,6 +51,10 @@ class VNode {
 
   // Helper
   isStatic = () => !this.vdom;
+
+  constructor(init?: Partial<VNode>) {
+    Object.assign(this, init);
+  }
 }
 ```
 
@@ -55,11 +63,9 @@ class VNode {
 Text: 'Test ${test/2/:a} Test'
 
 ```typescript
-function hasExpression(input: string) {
-  return /\$\{([^\}\s]+)\}/.test(input);
-}
+function parseText(input: string): ParsedText {
+  if (!/\$\{([^\}\s]+)\}/.test(input)) return [{ text: input }];
 
-function parseText(input: string) {
   const regex = /\$\{([^\}\s]+)\}|[^\$]+|\$/g;
   const result = [];
   let last = null;
@@ -97,20 +103,44 @@ Close means:
 - then: append = append.parent
 
 ```typescript
-class VdomBuilder {
-  current: VContainer = new VContainer();
+document.body.innerHTML += `
+  <template id="abc">
+    <div>
+      <div>test ${}</div>
+    </div>
+  </template>
+`;
+```
 
-  nodeStart(node: Node) {
-    // TODO
-  }
+topLevel => !container
 
-  nodeClose() {
-    // TODO
-  }
+topLevel => querySelectorAll('template')
 
-  static parse(nodes: NodeList): VContainer {
-    // isContainer(node)
-    // TODO
+```typescript
+function parseAttributes(node: Node) {
+  let attrs = Array.from(node.attributes);
+  let parse = ({ name, value }) => [name, parseText(value)];
+  return Object.fromEntries(attrs.map(parse));
+}
+
+function parseHtml(nodes: NodeList, parent: VNode, container: VContainer) {
+  for (const content of nodes) {
+    let template = (content as HTMLTemplateElement).content;
+    let attrs = parseAttributes(content);
+
+    let id = container.nodes.length;
+    let vnode = new VNode({ content, parent, container, id, attrs });
+    container.nodes.push(vnode);
+    if (parent) parent.children.push(vnode);
+
+    if (template) {
+      vnode.vdom = new VContainer();
+      vnode.vdom.parent = container;
+      vnode.vdom.attrs = attrs;
+      parseHtml(template.childNodes, undefined, vnode.vdom);
+    } else {
+      parseHtml(content.childNodes, vnode, container);
+    }
   }
 }
 ```
