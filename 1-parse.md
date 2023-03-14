@@ -57,17 +57,28 @@ Exp: 'test.2.:a'
 Text: 'Test ${test.2.:a} Test'
 
 ```typescript
-const regex = /\$\{([^\}\s]+)\}|[^\$]+|\$/g;
-const str = 'Test1 ${ ${1} Test2 ${123} Test3 ';
-Array.from(str.matchAll(regex), ([token, path]) =>
-  console.log(path ? { path } : token)
-);
+function hasExpression(input: string) {
+  return /\$\{([^\}\s]+)\}/.test(input);
+}
 
-function hasExpression() {}
+function parseText(input) {
+  const regex = /\$\{([^\}\s]+)\}|[^\$]+|\$/g;
+  const result = [];
+  let last = null;
 
-function parseText() {}
+  for (let [text, path] of input.matchAll(regex)) {
+    if (path) {
+      result.push((last = { path: parsePath(path) }));
+    } else if (last?.text) {
+      last.text += text;
+    } else {
+      result.push((last = { text }));
+    }
+  }
+  return result;
+}
 
-function parsePath() {}
+function parsePath(input: string) {}
 ```
 
 ## VdomBuilder
@@ -90,6 +101,7 @@ class VdomBuilder {
   nodeStart(node: Node) {
     // TODO
   }
+
   nodeClose() {
     // TODO
   }
