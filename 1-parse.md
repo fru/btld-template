@@ -52,16 +52,14 @@ class VNode {
 
 ## Path Expression
 
-Exp: 'test.2.:a'
-
-Text: 'Test ${test.2.:a} Test'
+Text: 'Test ${test/2/:a} Test'
 
 ```typescript
 function hasExpression(input: string) {
   return /\$\{([^\}\s]+)\}/.test(input);
 }
 
-function parseText(input) {
+function parseText(input: string) {
   const regex = /\$\{([^\}\s]+)\}|[^\$]+|\$/g;
   const result = [];
   let last = null;
@@ -78,7 +76,11 @@ function parseText(input) {
   return result;
 }
 
-function parsePath(input: string) {}
+function parsePath(input: string): Path {
+  return input.split('/').map(p => (
+    p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
+  ));
+}
 ```
 
 ## VdomBuilder
