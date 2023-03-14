@@ -4,18 +4,6 @@ This file has the parsers for the btld templating engine. We also define the
 virtual dom which acts as the intermediate representation (IR) and also holdes
 the state, listeners and functionality used during the runtime in the browser.
 
-## Imports
-
-```typescript
-import { nodeNeedsContainer, createContainer } from './0-main';
-```
-
-TODO can this be one function?
-
-TODO maybe we can extract the actual vdom build into a 2-api.md and also call
-check to throw errors? There we could also add any dom restructuring functions
-used by mixins and call state listeners.
-
 ## Virtual dom tree structure
 
 The virtual dom is made of `VContainer` and `VNode` instances. The container
@@ -29,26 +17,26 @@ dynamic dom we can assign a VContainer to replace existing content of a VNode.
 This allows for well defined alternating layeres of dynamic containers and
 static nodes.
 
-VContainers have the property `nodeList` which holds a flat list of all the
-VNodes that are managed by the container, ordered by the precedence in the dom.
-The VNode order is static and can't be changed after creation. So the index in
-this array gives an easy way to `id` VNodes given a specific VContainer. This is
+VContainers have the property `nodes` which holds a flat list of all the VNodes
+that are managed by the container, ordered by the precedence in the dom. The
+VNode order is static and can't be changed after creation. So the index in this
+array gives an easy way to `id` VNodes given a specific VContainer. This is
 usefull if we want to reattach dom listeners etc. on cloning. Also this list
 makes it easier to find the previous sibling of a VContainer. Just traverse the
-`VContainer.parent.container.nodeList` to find the sibling VNode that is static.
+`VContainer.parent.container.nodes` to find the sibling VNode that is static.
 
 ```typescript
-abstract class VContainer {
-  nodeList: VNode[]; // Complete list of nodes in container
-  rootList: VNode[]; // Just the root level nodes
+class VContainer {
+  nodes: VNode[]; // Complete list of nodes in container
   parent: VNode;
+  append: VNode; // Used during initialization - new nodes are appended here
 }
 
 class VNode {
   // Priority Case: Dynamic VContainer
   vdom: VContainer;
 
-  // Fallback Case: Static dom node tree
+  // Static Case: Consistent node tree, used if there is no vdom
   content: Node;
   children: VNode[];
   parent: VNode;
@@ -59,19 +47,59 @@ class VNode {
 
   // Helper
   isStatic = () => !this.vdom;
-  isCustomElement() {
-    return this.isStatic() && this.content?.tagName?.includes('-');
-  }
 }
 ```
-
-TODO should isCustomElement be defined later?
 
 ## Path Expression
 
 Exp: 'test.2.:a'
 
 Text: 'Test ${test.2.:a} Test'
+
+```typescript
+const regex = /\$\{([^\}\s]+)\}|[^\$]+|\$/g;
+const str = 'Test1 ${ ${1} Test2 ${123} Test3 ';
+Array.from(str.matchAll(regex), ([token, path]) =>
+  console.log(path ? { path } : token)
+);
+
+function hasExpression() {}
+
+function parseText() {}
+
+function parsePath() {}
+```
+
+## VdomBuilder
+
+Iterate DOM Nodes via node.childNodes.forEach((child => ...))
+
+Template is identifierd via node.content.childNodes
+
+Some Node + Attribute combinations are wrapped in a new VContainer
+
+Close means:
+
+- until append != null -> iterate: container = parent.container
+- then: append = append.parent
+
+```typescript
+class VdomBuilder {
+  current: VContainer = new VContainer();
+
+  nodeStart(node: Node) {
+    // TODO
+  }
+  nodeClose() {
+    // TODO
+  }
+
+  static parse(nodes: NodeList): VContainer {
+    // isContainer(node)
+    // TODO
+  }
+}
+```
 
 Error cases unexpected-token: 'test123', ':123', '123test', '..', ''
 
@@ -82,6 +110,14 @@ Error cases unexpected-token: 'test123', ':123', '123test', '..', ''
 -
 
 -
+
+```typescript
+class VNode {
+  isCustomElement() {
+    return this.isStatic() && this.content?.tagName?.includes('-');
+  }
+}
+```
 
 # OLD !!!!!!!!!
 
