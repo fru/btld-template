@@ -128,8 +128,8 @@ function parseHtml(nodes: NodeList, parent: VNode, container: VContainer) {
     let template = (content as HTMLTemplateElement).content;
     let attrs = parseAttributes(content);
 
-    let id = container.nodes.length;
-    let vnode = new VNode({ content, parent, container, id, attrs });
+    let vnode = new VNode({ content, parent, container });
+    vnode.id = container.nodes.length;
     container.nodes.push(vnode);
     if (parent) parent.children.push(vnode);
 
@@ -139,6 +139,7 @@ function parseHtml(nodes: NodeList, parent: VNode, container: VContainer) {
       vnode.vdom.attrs = attrs;
       parseHtml(template.childNodes, undefined, vnode.vdom);
     } else {
+      vnode.attrs = attrs;
       parseHtml(content.childNodes, vnode, container);
     }
   }
