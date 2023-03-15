@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "bench": "playwright-test test/benchmark/bench1.js --runner benchmark"
+    "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
+    "build": "node esbuild.mjs"
   },
   "author": "",
   "license": "ISC",
