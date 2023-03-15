@@ -1,16 +1,21 @@
 {
     "editor.defaultFormatter": null,
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
     "[typescript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.detectIndentation": false
     },
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.detectIndentation": false
     },
     "[markdown]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.detectIndentation": false
     },
     "files.exclude": {
         "**/node_modules": true
@@ -18,5 +23,4 @@
     "prettier.singleQuote": true,
     "prettier.proseWrap": "always",
     "prettier.arrowParens": "avoid",
-    
 }
