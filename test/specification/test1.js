@@ -1,4 +1,5 @@
 import { assert } from 'chai';
+import '../../dist/out.js';
 
 describe('Array', () => {
   describe('#indexOf()', () => {
