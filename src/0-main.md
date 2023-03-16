@@ -6,4 +6,7 @@ console.log({ ab_: 'Te' });
 
 ```typescript src
 console.log('Test');
+
+let x = { test: 'abcd' };
+export { x };
 ```

@@ -24,6 +24,7 @@ let options = {
   bundle: true,
   outfile: 'dist/out.js',
   plugins: [markdown('typescript src')],
+  format: 'esm',
   minify: true,
   mangleProps: /_$/,
   mangleCache,
