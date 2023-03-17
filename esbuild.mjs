@@ -22,7 +22,7 @@ let mangleCache = JSON.parse(fs.readFileSync('./src/naming-cache.json'));
 let options = {
   entryPoints: ['src/0-main.md'],
   bundle: true,
-  outfile: 'dist/out.js',
+  outfile: 'dist/btld-template.js',
   plugins: [markdown('typescript src')],
   format: 'esm',
   minify: true,

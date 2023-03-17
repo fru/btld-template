@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "playwright-test test/specification/test1.js --runner mocha --watch",
+    "test": "playwright-test test/specification/*.js --runner mocha --watch",
     "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
     "build": "node esbuild.mjs",
     "build-watch": "concurrently --kill-others \"node esbuild.mjs watch\" \"npm run test\""
