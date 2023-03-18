@@ -8,15 +8,17 @@ objects to create custom elements.
 
 ```typescript src
 export function define(tag: string, extends: string, attrs: string[], methods) {
-	const Extends = getHTMLElementClass(extends);
-	const BtldWrapper = () => render(Reflect.construct(Extends, [], new.target));
-	Object.assign(BtldWrapper.prototype, methods);
-	Object.setPrototypeOf(BtldWrapper.prototype, Extends.prototype);
+  const Extends = getHTMLElementClass(extends);
+  const BtldWrapper = () => render(Reflect.construct(Extends, [], new.target));
+  Object.assign(BtldWrapper.prototype, methods);
+  Object.setPrototypeOf(BtldWrapper.prototype, Extends.prototype);
   BtldWrapper.observedAttributes = attrs;
   if (window) window[getExpectedHTMLClassName(tag)] = BtldWrapper;
-	customElements.define(tag, BtldWrapper, {extends});
+  customElements.define(tag, BtldWrapper, {extends});
 }
 ```
+
+##
 
 For this to work we also need to resolve the extends tag name into the js
 constructor for that tag. First we try using the expected class name. If that
@@ -45,7 +47,7 @@ loaded. This is loosely based on
 const renderLater = [];
 
 function render(that) {
-  const run = t => t.render && t.render();
+  const run = t => t && t.render && t.render();
   const event = () => {
     renderLater.forEach(run);
     renderLater.length = 0; // Clear array
