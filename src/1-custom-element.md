@@ -1,20 +1,33 @@
 # Define custom elements
 
-Usually the js class syntax is required to define web components aka. custom
-elements. This is a problem because we want to allow inheritance from dynamic
-html elements. A new tag can `extend` an existing tag. We use the following
-[workaround](https://github.com/WICG/webcomponents/issues/587) to allow plain
-objects to create custom elements.
+The `define` function is used to globally register the `BtldWebComponent` with
+the browser to create the web components aka. custom elements.
 
 ```typescript src
-export function define(tag: string, extend: string, attrs: string[], methods) {
-  const Extend = getHTMLElementClass(extend);
-  const BtldWrapper = () => render(Reflect.construct(Extend, [], new.target));
-  Object.assign(BtldWrapper.prototype, methods);
+export interface BtldWebComponent {
+  tag: string;
+  observedAttributes: string[];
+  extends: string;
+  render?: () => {};
+}
+```
+
+Usually the js class syntax is required to define web components. This is a
+problem because we want to dynamically extend different html elements. We use
+the following [workaround](https://github.com/WICG/webcomponents/issues/587) to
+allow plain objects to create custom elements.
+
+```typescript src
+export function define(def: BtldWebComponent) {
+  const Extend = getHTMLElementClass(def.extends);
+  function BtldWrapper() {
+    return triggerDelayedRender(Reflect.construct(Extend, [], new.target));
+  }
+  Object.assign(BtldWrapper.prototype, def);
   Object.setPrototypeOf(BtldWrapper.prototype, Extend.prototype);
-  BtldWrapper.observedAttributes = attrs;
-  if (window) window[getExpectedHTMLClassName(tag)] = BtldWrapper;
-  customElements.define(tag, BtldWrapper, { extend });
+  BtldWrapper.observedAttributes = def.observedAttributes;
+  if (window) window[getExpectedHTMLClassName(def.tag)] = BtldWrapper;
+  customElements.define(def.tag, BtldWrapper, { extends: def.extends });
 }
 ```
 
@@ -48,7 +61,7 @@ loaded. This is loosely based on
 ```typescript src
 const renderLater = [];
 
-function render(that) {
+function triggerDelayedRender(that) {
   const run = t => t && t.render && t.render();
   const event = () => {
     renderLater.forEach(run);
