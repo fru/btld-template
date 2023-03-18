@@ -18,7 +18,7 @@ export function define(tag: string, extends: string, attrs: string[], methods) {
 }
 ```
 
-##
+## Element Class e.g. 'ul' to HTMLUListElement
 
 For this to work we also need to resolve the extends tag name into the js
 constructor for that tag. First we try using the expected class name. If that
@@ -37,6 +37,8 @@ function getHTMLElementClass(tag: string): new () => HTMLElement {
   return document.createElement(tag).constructor;
 }
 ```
+
+## Render after DOMContentLoaded
 
 After the construction of the web component the render method is triggered. To
 allow for consistent dom access this call is delayed until the dom content is
