@@ -26,13 +26,13 @@ fails we construct an instance of the element and get the constructor.
 
 ```typescript src
 function getExpectedHTMLClassName(tag: string): string {
-  const upper = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const upper = s => s.charAt(0).toUpperCase() + s.slice(1);
   return 'HTML' + tag.split('-').map(upper).join('') + 'Element';
 }
 
 function getHTMLElementClass(tag: string): new () => HTMLElement {
   if (!tag) return HTMLElement;
-  const possible = window.?[getExpectedHTMLClassName(tag)];
+  const possible = window && window[getExpectedHTMLClassName(tag)];
   if (possible && possible.DOCUMENT_NODE) return possible;
   return document.createElement(tag).constructor;
 }
