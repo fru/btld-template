@@ -2,19 +2,19 @@
 
 Usually the js class syntax is required to define web components aka. custom
 elements. This is a problem because we want to allow inheritance from dynamic
-html elements. A new tag can `extends` an existing tag. We use the following
+html elements. A new tag can `extend` an existing tag. We use the following
 [workaround](https://github.com/WICG/webcomponents/issues/587) to allow plain
 objects to create custom elements.
 
 ```typescript src
-export function define(tag: string, extends: string, attrs: string[], methods) {
-  const Extends = getHTMLElementClass(extends);
-  const BtldWrapper = () => render(Reflect.construct(Extends, [], new.target));
+export function define(tag: string, extend: string, attrs: string[], methods) {
+  const Extend = getHTMLElementClass(extend);
+  const BtldWrapper = () => render(Reflect.construct(Extend, [], new.target));
   Object.assign(BtldWrapper.prototype, methods);
-  Object.setPrototypeOf(BtldWrapper.prototype, Extends.prototype);
+  Object.setPrototypeOf(BtldWrapper.prototype, Extend.prototype);
   BtldWrapper.observedAttributes = attrs;
   if (window) window[getExpectedHTMLClassName(tag)] = BtldWrapper;
-  customElements.define(tag, BtldWrapper, {extends});
+  customElements.define(tag, BtldWrapper, { extend });
 }
 ```
 
@@ -45,7 +45,7 @@ allow for consistent dom access this call is delayed until the dom content is
 loaded. This is loosely based on
 [JQuery.Ready](https://github.com/jquery/jquery/blob/main/src/core/ready.js).
 
-```typescript
+```typescript src
 const renderLater = [];
 
 function render(that) {
