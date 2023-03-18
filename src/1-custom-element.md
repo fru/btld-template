@@ -19,8 +19,8 @@ export function define(tag: string, extends: string, attrs: string[], methods) {
 ```
 
 For this to work we also need to resolve the extends tag name into the js
-constructor. First we try using the expected class name. If that fails we
-construct an instance of the element and get the constructor.
+constructor for that tag. First we try using the expected class name. If that
+fails we construct an instance of the element and get the constructor.
 
 ```typescript src
 function getExpectedHTMLClassName(tag: string): string {
