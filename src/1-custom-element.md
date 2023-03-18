@@ -41,7 +41,7 @@ function getHTMLElementClass(tag: string): new () => HTMLElement {
 After the construction of the web component the render method is triggered. To
 allow for consistent dom access this call is delayed until the dom content is
 loaded. This is loosely based on
-(JQuery.Ready)[https://github.com/jquery/jquery/blob/main/src/core/ready.js].
+[JQuery.Ready](https://github.com/jquery/jquery/blob/main/src/core/ready.js).
 
 ```typescript
 const renderLater = [];
