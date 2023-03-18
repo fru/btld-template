@@ -1,13 +1,3 @@
-Based on jquery: https://github.com/jquery/jquery/blob/main/src/core/ready.js
-
-```typescript
-
-let isReady = false
-if ( document.readyState !== "loading" ) {
-  document.addEventListener( "DOMContentLoaded", completed );
-document.removeEventListener( "DOMContentLoaded", completed );
-```
-
 Error handling
 
 ```typescript
