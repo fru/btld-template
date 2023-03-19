@@ -6,6 +6,10 @@ TODO vdom, observedAttributes, clone,
 
 TODO attach (rootNodes, read out state, getter setter)
 
+TODO reattachChildren (used by attach) reattachSelf (used by mixins)
+
+TODO reattachSelf use insertBefore ???
+
 This file has the parsers for the btld templating engine. We also define the
 virtual dom which acts as the intermediate representation (IR) and also holdes
 the state, listeners and functionality used during the runtime in the browser.
