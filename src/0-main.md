@@ -2,12 +2,10 @@ READ this to understand the public api of the btld-template framework
 
 ```typescript src
 import { define } from './1-custom-element.md';
-import { parseTopLevel } from './2-parse.md';
+import { parseTopLevel } from './3-parse.md';
 ```
 
 ```typescript src
-function attributeChangedCallback(name, oldValue, newValue) {}
-
 function defineBtldComponent() {
   let {tag, extends} = this.attributes;
   let {vdom, observedAttributes} = parseTopLevel(this.children);
@@ -18,8 +16,7 @@ function defineBtldComponent() {
     render: function () {
       this.attachShadow({ mode: 'open' });
       this.__vdom = vdom.clone().attach(this);
-    },
-    attributeChangedCallback
+    }
   });
 }
 

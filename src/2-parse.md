@@ -4,11 +4,11 @@ TODO parseTopLevel, parseMetadata
 
 TODO vdom, observedAttributes, clone,
 
-TODO attach (rootNodes, read out state, getter setter)
+TODO attach (rootNodes reattachChildren, read out state, getter setter)
 
 TODO reattachChildren (used by attach) reattachSelf (used by mixins)
 
-TODO reattachSelf use insertBefore ???
+TODO reattach\* uses insertBefore -> find preceding node
 
 This file has the parsers for the btld templating engine. We also define the
 virtual dom which acts as the intermediate representation (IR) and also holdes
