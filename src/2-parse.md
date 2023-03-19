@@ -1,5 +1,11 @@
 # BTLD Parser
 
+TODO parseTopLevel, parseMetadata
+
+TODO vdom, observedAttributes, clone,
+
+TODO attach (rootNodes, read out state, getter setter)
+
 This file has the parsers for the btld templating engine. We also define the
 virtual dom which acts as the intermediate representation (IR) and also holdes
 the state, listeners and functionality used during the runtime in the browser.
@@ -165,6 +171,16 @@ class VNode {
 ```
 
 # OLD !!!!!!!!!
+
+```typescript
+const getChildren = (tag: string) => {
+  let filter = (el: HTMLElement) => el.tagName === tag.toUpperCase();
+  return Array.from(this.children).filter(filter);
+};
+
+const attributes = getChildren('attr');
+const container = parse(getChildren('template'));
+```
 
 Extract Error handling to utils
 

@@ -1,40 +1,29 @@
-// READ this to understand the public api of the btld-template framework
+READ this to understand the public api of the btld-template framework
 
 ```typescript src
 import { define } from './1-custom-element.md';
-import { parseToplevel } from './2-parse.md';
+import { parseTopLevel } from './2-parse.md';
 ```
 
 ```typescript src
-function render() {
-  //let { vdom, observedAttributes } = parseToplevel(this.children);
+function attributeChangedCallback(name, oldValue, newValue) {}
 
-  const getChildren = (tag: string) => {
-    let filter = (el: HTMLElement) => el.tagName === tag.toUpperCase();
-    return Array.from(this.children).filter(filter);
-  };
-
-  const attributes = getChildren('attr');
-  const container = parse(getChildren('template'));
-
-  function renderBtldComponent() {
-    this.attachShadow({ mode: 'open' });
-    const vdom = container.clone();
-    vdom.attach();
-    console.log(this.innerHTML);
-  }
+function defineBtldComponent() {
+  let {tag, extends} = this.attributes;
+  let {vdom, observedAttributes} = parseTopLevel(this.children);
 
   define({
-    tag: this.getAttribute('tag'),
-    extends: this.getAttribute('extends'),
-    observedAttributes: attributes.map(el => el.textContent.trim()),
+    tag, extends, observedAttributes,
     definition: this,
-    render: renderBtldComponent,
-    attributes,
+    render: function () {
+      this.attachShadow({ mode: 'open' });
+      this.__vdom = vdom.clone().attach(this);
+    },
+    attributeChangedCallback
   });
 }
 
 export function init() {
-  define({ tag: 'btld-template', render });
+  define({ tag: 'btld-template', render: defineBtldComponent });
 }
 ```
