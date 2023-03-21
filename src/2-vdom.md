@@ -4,10 +4,6 @@ In this file we define the virtual dom which acts as the intermediate
 representation (IR) and also holdes the state, listeners and functionality used
 during the runtime in the browser.
 
-TODO clone, reattachChildren, state, state listeners
-
-TODO reattach\* uses insertBefore -> find preceding node
-
 ## Virtual dom tree structure
 
 The virtual dom is made of `VContainer` and `VNode` instances. The container
@@ -29,17 +25,18 @@ usefull if we want to reattach dom listeners etc. on cloning. Also this list
 makes it easier to find the previous sibling of a VContainer. Just traverse the
 `VContainer.parent.container.nodes` to find the sibling VNode that is static.
 
-```typescript
-type Path = { p: string; ref?: true }[];
-type ParsedText = { text?: string; path: Path }[];
+```typescript src
+export type Path = { p: string; ref?: true }[];
+export type ParsedText = { text?: string; path: Path }[];
 
-class VContainer {
+export class VContainer {
   nodes: VNode[] = []; // Complete list of nodes in container
   parent: VNode;
   attrs: { [key: string]: ParsedText };
+  state: { [key: string]: unknown } = {};
 }
 
-class VNode {
+export class VNode {
   // Priority Case: Dynamic VContainer
   vdom: VContainer;
 
@@ -60,4 +57,38 @@ class VNode {
     Object.assign(this, init);
   }
 }
+```
+
+```typescript src
+VContainer.prototype.clone = () => {
+  // TODO
+};
+```
+
+```typescript src
+VNode.prototype.reattachChildren = () => {
+  // reattach\* uses insertBefore -> find preceding node
+  // TODO
+};
+```
+
+```typescript src
+VNode.prototype.reattachSelf = () => {
+  // TODO shows which fields of vdom are used for this traversal
+};
+```
+
+```typescript src
+type VdomStateListener = (after: any, before: any) => void;
+VNode.prototype.listen = (path: Path, listener: VdomStateListener) => {
+  // TODO
+};
+
+function mutateState(path: Path, value: unknown) {
+  // TODO
+}
+
+VNode.prototype.setState = (path: Path, value: unknown) => {
+  // TODO
+};
 ```
