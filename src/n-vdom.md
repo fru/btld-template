@@ -29,14 +29,8 @@ makes it easier to find the previous sibling of a VContainer. Just traverse the
 export type Path = { p: string; ref?: true }[];
 export type ParsedText = { text?: string; path: Path }[];
 
-export class VContainer {
-  // Priority Case: Nodes
+export abstract class VContainer {
   nodes: VNode[] = []; // Complete list of nodes in container
-
-  // Template Case: Render Template
-  template: VContainer;
-  templateNode: HTMLTemplateElement;
-
   parent: VNode;
   attrs: { [key: string]: ParsedText };
 }
@@ -56,7 +50,9 @@ export class VNode {
   id: number;
 
   // Helper
-  isStatic = () => !this.vdom;
+  isStatic() {
+    return !this.vdom;
+  }
 
   constructor(init?: Partial<VNode>) {
     Object.assign(this, init);
@@ -66,7 +62,7 @@ export class VNode {
 
 ```typescript src
 class VContainer {
-  clone() {
+  clone({ deep = false }) {
     // TODO
   }
 }
@@ -84,42 +80,6 @@ class VNode {
 class VNode {
   reattachSelf() {
     // TODO shows which fields of vdom are used for this traversal
-  }
-}
-```
-
-```typescript src
-function mutateState(path: Path, state: unknown, value: unknown) {
-  // mutate + freeze
-  // TODO
-}
-
-function extractKey(path: Path) {
-  // TODO
-}
-
-function cloneFrozen(object, options: { deep: boolean } = {}) {
-  // TODO
-}
-```
-
-```typescript src
-export type VdomStateListener = (after: any, before: any) => void;
-
-class VContainer {
-  _state: { [key: string]: unknown } = {};
-  _listener: { [key: string]: VdomStateListener[] } = {};
-
-  listen(path: Path, do: VdomStateListener) {
-    // TODO
-  }
-
-  setState(path: Path, value: unknown) {
-    // TODO
-  }
-
-  getState(path: Path) {
-    // TODO
   }
 }
 ```

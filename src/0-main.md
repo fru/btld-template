@@ -2,7 +2,7 @@ READ this to understand the public api of the btld-template framework
 
 ```typescript src
 import { define } from './1-custom-element.md';
-import { parseTopLevel } from './3-parse.md';
+import { parseTopLevel } from './4-parse.md';
 ```
 
 ```typescript src
