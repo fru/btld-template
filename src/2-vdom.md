@@ -30,10 +30,15 @@ export type Path = { p: string; ref?: true }[];
 export type ParsedText = { text?: string; path: Path }[];
 
 export class VContainer {
+  // Priority Case: Nodes
   nodes: VNode[] = []; // Complete list of nodes in container
+
+  // Template Case: Render Template
+  template: VContainer;
+  templateNode: HTMLTemplateElement;
+
   parent: VNode;
   attrs: { [key: string]: ParsedText };
-  state: { [key: string]: unknown } = {};
 }
 
 export class VNode {
@@ -60,35 +65,61 @@ export class VNode {
 ```
 
 ```typescript src
-VContainer.prototype.clone = () => {
-  // TODO
-};
+class VContainer {
+  clone() {
+    // TODO
+  }
+}
 ```
 
 ```typescript src
-VNode.prototype.reattachChildren = () => {
-  // reattach\* uses insertBefore -> find preceding node
-  // TODO
-};
+class VNode {
+  reattachChildren() {
+    // TODO
+  }
+}
 ```
 
 ```typescript src
-VNode.prototype.reattachSelf = () => {
-  // TODO shows which fields of vdom are used for this traversal
-};
+class VNode {
+  reattachSelf() {
+    // TODO shows which fields of vdom are used for this traversal
+  }
+}
 ```
 
 ```typescript src
-type VdomStateListener = (after: any, before: any) => void;
-VNode.prototype.listen = (path: Path, listener: VdomStateListener) => {
-  // TODO
-};
-
-function mutateState(path: Path, value: unknown) {
+function mutateState(path: Path, state: unknown, value: unknown) {
+  // mutate + freeze
   // TODO
 }
 
-VNode.prototype.setState = (path: Path, value: unknown) => {
+function extractKey(path: Path) {
   // TODO
-};
+}
+
+function cloneFrozen(object, options: { deep: boolean } = {}) {
+  // TODO
+}
+```
+
+```typescript src
+export type VdomStateListener = (after: any, before: any) => void;
+
+class VContainer {
+  _state: { [key: string]: unknown } = {};
+  _listener: { [key: string]: VdomStateListener[] } = {};
+
+  listen(path: Path, do: VdomStateListener) {
+    // TODO
+  }
+
+  setState(path: Path, value: unknown) {
+    // TODO
+  }
+
+  getState(path: Path) {
+    // TODO
+  }
+}
 ```
