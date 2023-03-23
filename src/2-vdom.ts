@@ -1,7 +1,7 @@
 type index = number;
 
 class VReplacable {
-  standin?: (VContainer | undefined)[] = undefined;
+  standin?: VContainer[] = undefined;
 
   attach(added: VContainer, index?: number) {
     // TODO
@@ -16,19 +16,31 @@ class VReplacable {
     // insertBefore all root nodes
   }
 
-  modify(map: (item: VContainer) => number | '?' | 'x') {
-    let change = [] as number[];
-    let result = [];
-    for (let item of this.standin || []) {
+  remove(count: number) {}
+
+  order(moveTo: (item: VContainer) => number | undefined) {
+    if (!this.standin) return;
+
+    // Phase 1: Update standin
+    let result = [] as VContainer[];
+    let filler = [] as VContainer[];
+    // Phase 2: Modify dom
+    let modified = [] as VContainer[];
+
+    for (let [index, item] of this.standin.entries()) {
+      let to = moveTo(item);
+
+      if (to !== index || result[to]) modified.push(item);
+      if (to && to >= 0 && !result[to]) result[to] = item;
+      else filler.push(item);
     }
 
-    // TODO dom manipulation
+    for (let i = 0; i < this.standin.length; i++) {
+      if (!result[i]) result[i] = filler.shift()!;
+    }
     this.standin = result;
 
-    // TODO
-    // How can this be easily used by for loop?
-    // 1. Map to index of new array
-    // 2.
+    // TODO dom manipulation
   }
 }
 
@@ -42,10 +54,6 @@ class VNode extends VReplacable {
     public node: Text | Element
   ) {
     super();
-  }
-
-  actualize(detach: boolean, parent?: Node, next?: Node) {
-    // TODO
   }
 }
 
@@ -68,21 +76,34 @@ class VContainer {
 
     return container;
   }
-
-  reattach() {
-    // TODO
-  }
 }
 
 interface VReplacable {
-  getPosition(): { parent?: Node; next?: Node };
+  getPosition(): Position;
   getRootNodes(): Node[];
+  actualize(detach: boolean, pos?: Position): void;
 }
+
+interface Position {
+  parent: HTMLElement;
+  next: Node | null;
+}
+
+VReplacable.prototype.actualize = function (detach: boolean, pos?: Position) {
+  for (const root of <Node[]>this.getRootNodes()) {
+    if (detach) {
+      if (root.parentElement) root.parentElement?.removeChild(root);
+    } else {
+      if (!pos) pos = <Position>this.getPosition();
+      pos.parent.insertBefore(pos.parent, pos.next);
+    }
+  }
+};
 
 interface VContainer {
-  getFirstNode(): Node;
+  getFirstNode(): Node; // Used by getPosition().next
 }
 
-VReplacable.prototype.getPosition = function () {
-  return {};
+VReplacable.prototype.getPosition = function (): Position {
+  return { parent: document.body, next: null };
 };
