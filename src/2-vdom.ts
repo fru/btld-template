@@ -1,4 +1,112 @@
-type index = number;
+// VContainer
+
+class VContainer {
+  constructor(public readonly vnodes: VNode[]) {}
+
+  private _parent: VContainer | undefined;
+  private _nested: VContainer[] = [];
+
+  public getParent = () => this._parent;
+  public getNested = () => [...this._nested];
+
+  append(child: VContainer) {
+    if (child._parent) child.detach();
+    child._parent = this;
+    this._nested.push(child);
+    this.reattachRoots(true);
+  }
+
+  detach() {
+    if (this._parent) {
+      let index = this._parent._nested.indexOf(this);
+      this._parent._nested.splice(index, 1);
+      this._parent = undefined;
+      this.reattachRoots(false);
+    }
+  }
+
+  move(from: number, to: number) {
+    let max = this._nested.length - 1;
+    if (from >= 0 && to >= 0 && from <= max && to < max) {
+      let moved = this._nested.splice(from, 1)[0];
+      this._nested.splice(to, 0, moved);
+      moved.reattachRoots(true);
+    }
+  }
+}
+
+// VNode + Full interface
+
+class VNode {
+  constructor(
+    public readonly container: VContainer,
+    public readonly self: number,
+    public readonly next: number,
+    public readonly parent: number,
+    public readonly children: number[],
+    public node: Text | Element
+  ) {}
+}
+
+interface VContainer {
+  getFirstRoot(): Node;
+  reattachRoots(attach: boolean): void;
+
+  clone(deep: boolean): VContainer;
+  order(moveTo: (item: VContainer) => number | undefined): void;
+}
+
+// Clone
+
+VContainer.prototype.clone = function (this: VContainer, deep) {
+  let container = new VContainer();
+  for (let original of this.nodes) {
+    let { self, next, parent, children } = original;
+    let node = original.node && <any>original.node.cloneNode();
+    let copy = new VNode(container, self, next, parent, [...children], node);
+
+    if (deep && original.standin) {
+      copy.standin = original.standin.map(x => x?.clone(deep));
+    }
+    container.nodes.push(copy);
+  }
+
+  return container;
+};
+
+// Reattach
+
+/*
+
+VContainer.prototype.order = function (this: VContainer, moveTo) {
+  if (!this.nested) return;
+
+  // Phase 1: Update standin
+  let result = [] as VContainer[];
+  let filler = [] as VContainer[];
+
+  // Phase 2: Modify dom
+  let modified = [] as VContainer[];
+
+  for (let [index, item] of this.nested.entries()) {
+    let to = moveTo(item);
+
+    if (to !== index || result[to]) modified.push(item);
+    if (to && to >= 0 && !result[to]) result[to] = item;
+    else filler.push(item);
+  }
+
+  for (let i = 0; i < this.nested.length; i++) {
+    if (!result[i]) result[i] = filler.shift()!;
+  }
+
+  this.nested = result;
+  for (let m of modified) m.reattachRoots(true);
+};
+
+*/
+
+/*
 
 class VReplaceable {
   standin?: VContainer[] = undefined;
@@ -18,30 +126,7 @@ class VReplaceable {
 
   remove(count: number) {}
 
-  order(moveTo: (item: VContainer) => number | undefined) {
-    if (!this.standin) return;
-
-    // Phase 1: Update standin
-    let result = [] as VContainer[];
-    let filler = [] as VContainer[];
-    // Phase 2: Modify dom
-    let modified = [] as VContainer[];
-
-    for (let [index, item] of this.standin.entries()) {
-      let to = moveTo(item);
-
-      if (to !== index || result[to]) modified.push(item);
-      if (to && to >= 0 && !result[to]) result[to] = item;
-      else filler.push(item);
-    }
-
-    for (let i = 0; i < this.standin.length; i++) {
-      if (!result[i]) result[i] = filler.shift()!;
-    }
-    this.standin = result;
-
-    // TODO dom manipulation
-  }
+  
 }
 
 // Every vnode has exactly one node and vise versa
@@ -140,3 +225,4 @@ VNode.prototype.getPosition = function (this: VNode): Position {
   }
   return { parent: document.body, next: null };
 };
+*/
