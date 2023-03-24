@@ -1,6 +1,6 @@
 type index = number;
 
-class VReplacable {
+class VReplaceable {
   standin?: VContainer[] = undefined;
 
   attach(added: VContainer, index?: number) {
@@ -44,7 +44,10 @@ class VReplacable {
   }
 }
 
-class VNode extends VReplacable {
+// Every vnode has exactly one node and vise versa
+// Except leave dom nodes - there children are not managed
+
+class VNode extends VReplaceable {
   constructor(
     public readonly container: VContainer,
     public readonly self: index,
@@ -57,9 +60,10 @@ class VNode extends VReplacable {
   }
 }
 
-class VContainer {
-  parent?: VNode; // Ensures, single or no vnode parent
+class VContainer extends VReplaceable {
+  parent?: VReplaceable; // Ensures, single or no vnode parent
   nodes: VNode[] = []; // Complete list of nodes in container
+  shown: boolean = true;
 
   clone(deep: boolean) {
     let container = new VContainer();
@@ -78,32 +82,61 @@ class VContainer {
   }
 }
 
-interface VReplacable {
+interface VReplaceable {
   getPosition(): Position;
   getRootNodes(): Node[];
   actualize(detach: boolean, pos?: Position): void;
 }
 
 interface Position {
-  parent: HTMLElement;
-  next: Node | null;
+  parent: VNode;
+  next: VNode | undefined;
 }
 
-VReplacable.prototype.actualize = function (detach: boolean, pos?: Position) {
+VReplaceable.prototype.actualize = function (detach: boolean, pos?: Position) {
   for (const root of <Node[]>this.getRootNodes()) {
     if (detach) {
       if (root.parentElement) root.parentElement?.removeChild(root);
     } else {
       if (!pos) pos = <Position>this.getPosition();
-      pos.parent.insertBefore(pos.parent, pos.next);
+      if (!pos?.parent?.standin) {
+        // TODO
+        pos.parent.insertBefore(this, pos.next);
+      }
     }
   }
 };
 
 interface VContainer {
-  getFirstNode(): Node; // Used by getPosition().next
+  getFirstNode(): VNode | undefined; // Used by getPosition().next
 }
 
-VReplacable.prototype.getPosition = function (): Position {
+VContainer.prototype.getFirstNode = function (this: VContainer) {
+  if (!this.standin) return this.nodes[0];
+  for (let inner of this.standin) {
+    // TODO Filter hidden VContainer
+    let found = inner.getFirstNode();
+    if (found) return found;
+  }
+};
+
+VContainer.prototype.getPosition = function (this: VReplaceable): Position {
+  return { parent: document.body, next: null };
+};
+
+VNode.prototype.getPosition = function (this: VNode): Position {
+  let parent = this.container.nodes[this.parent];
+  let next = this.container.nodes[this.next];
+
+  if (parent) return { parent, next };
+  if (next) {
+    this.container.parent.
+    // Only go up to find parent
+  }
+
+
+  if (this.parent) {
+  } else {
+  }
   return { parent: document.body, next: null };
 };
