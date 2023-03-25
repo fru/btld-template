@@ -1,27 +1,30 @@
 // VContainer
 
 class VContainer {
-  constructor(public readonly vnodes: VNode[]) {}
+  // TODO remove - this is just too soon
+  constructor(protected readonly vnodes: VNode[]) {}
 
   private _parent: VContainer | undefined;
   private _nested: VContainer[] = [];
 
-  public getParent = () => this._parent;
-  public getNested = () => [...this._nested];
+  getParent = () => this._parent;
+  getNested = () => [...this._nested];
+  hasNested = () => !!this._nested.length;
 
   append(child: VContainer) {
     if (child._parent) child.detach();
     child._parent = this;
     this._nested.push(child);
-    this.reattachRoots(true);
+    this.repositionRoots();
   }
+
+  getIndex = () => this._parent && this._parent._nested.indexOf(this);
 
   detach() {
     if (this._parent) {
-      let index = this._parent._nested.indexOf(this);
-      this._parent._nested.splice(index, 1);
+      this._parent._nested.splice(this.getIndex()!, 1);
       this._parent = undefined;
-      this.reattachRoots(false);
+      this.repositionRoots();
     }
   }
 
@@ -30,12 +33,25 @@ class VContainer {
     if (from >= 0 && to >= 0 && from <= max && to < max) {
       let moved = this._nested.splice(from, 1)[0];
       this._nested.splice(to, 0, moved);
-      moved.reattachRoots(true);
+      this.repositionRoots();
     }
+  }
+
+  private _hiddenByMixin = new Set<string>();
+
+  isVisible = () => !this._hiddenByMixin.size;
+  setHiddenByMixin(mixin: string, hidden: boolean) {
+    let s = this._hiddenByMixin;
+    hidden ? s.delete(mixin) : s.add(mixin);
+    this.repositionRoots();
   }
 }
 
 // VNode + Full interface
+
+interface VContainer {
+  // vnodes
+}
 
 class VNode {
   constructor(
@@ -48,33 +64,59 @@ class VNode {
   ) {}
 }
 
-interface VContainer {
-  getFirstRoot(): Node;
-  reattachRoots(attach: boolean): void;
-
-  clone(deep: boolean): VContainer;
-  order(moveTo: (item: VContainer) => number | undefined): void;
-}
-
 // Clone
 
+interface VContainer {
+  clone(deep: boolean): VContainer;
+  cloneRecurse(from: VContainer): void;
+}
+
 VContainer.prototype.clone = function (this: VContainer, deep) {
-  let container = new VContainer();
-  for (let original of this.nodes) {
+  let vnodes: VNode[] = [];
+  let container = new VContainer(vnodes);
+  for (let original of this.vnodes) {
     let { self, next, parent, children } = original;
-    let node = original.node && <any>original.node.cloneNode();
-    let copy = new VNode(container, self, next, parent, [...children], node);
-
-    if (deep && original.standin) {
-      copy.standin = original.standin.map(x => x?.clone(deep));
-    }
-    container.nodes.push(copy);
+    let node = original.node && (original.node.cloneNode() as Text | Element);
+    vnodes.push(new VNode(container, self, next, parent, [...children], node));
   }
-
+  if (deep) container.cloneRecurse(this);
   return container;
 };
 
+VContainer.prototype.cloneRecurse = function (this: VContainer, from) {
+  from.getNested().forEach(n => this.append(n.clone(true)));
+};
+
 // Reattach
+
+type Position = { parent: VNode; next?: VNode };
+interface VContainer {
+  getRoots(onlyFirst: boolean, result?: VNode[]): VNode[];
+  getRootAfter(): VNode;
+  repositionRoots(): void;
+}
+
+VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
+  if (this.isVisible() && (!onlyFirst || !o.length)) {
+    if (this.hasNested()) {
+      this.getNested().forEach(n => n.getRoots(onlyFirst, o));
+    } else {
+      o.push(...this.vnodes.filter(n => !n.parent));
+    }
+  }
+  return o;
+};
+
+VContainer.prototype.getRootAfter = function (this: VContainer) {
+  // let next = sibling
+  // let
+
+  return null as VNode;
+};
+
+VContainer.prototype.repositionRoots = function (this: VContainer) {
+  // TODO
+};
 
 /*
 
