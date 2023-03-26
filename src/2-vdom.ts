@@ -78,6 +78,7 @@ VContainer.prototype.clone = function (this: VContainer, deep) {
     let node = original.node && (original.node.cloneNode() as Text | Element);
     return new VNode(container, self, next, parent, [...children], node);
   });
+  // !!!!!! TODO attach child nodes
   container.setNodes(nodes);
   if (deep) container.cloneRecurse(this);
   return container;
@@ -92,7 +93,7 @@ VContainer.prototype.cloneRecurse = function (this: VContainer, from) {
 type Position = { parent: VNode; next?: VNode };
 interface VContainer {
   getRoots(onlyFirst: boolean, result?: VNode[]): VNode[];
-  getRootAfterThis(): VNode;
+  getRootAfterThis(): VNode | undefined;
   repositionRoots(): void;
 }
 
@@ -107,17 +108,27 @@ VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
   return o;
 };
 
+function findPossibleSibling(current?: VContainer) {
+  while (current) {
+    if (current.getSibling()) return current.getSibling();
+    current = current.getParent()!;
+  }
+}
+
 VContainer.prototype.getRootAfterThis = function (this: VContainer) {
-  // let current = this;
-  // while (current && !current.getSibling()) current = curent.parent;
-  // return current.getSibling().getRoots(true)[0];
-  return null as VNode;
+  let sibling = findPossibleSibling();
+  if (sibling) {
+    let first = sibling.getRoots(true);
+    return first[0] || sibling.getRootAfterThis();
+  }
 };
 
 VContainer.prototype.repositionRoots = function (this: VContainer) {
+  // Highest VContainer gets a VShadowRoot
+
   // Check visiblilty
-  let after = this.getRootAfterThis().node;
+  let after = this.getRootAfterThis();
   let roots = this.getRoots(false).map(r => r.node);
   let component = document.body; // TODO how to get the shadowRoot??? and check if attached
-  roots.forEach(r => component.insertBefore(r, after));
+  roots.forEach(r => component.insertBefore(r, after?.node || null));
 };
