@@ -10,9 +10,9 @@ export class VNode {
 }
 
 export class VContainer {
-  private _parent: VContainer | undefined;
-  private _nested: VContainer[] = [];
-  private _hiddenByMixin = new Set<string>();
+  _parent: VContainer | undefined;
+  _nested: VContainer[] = [];
+  _hiddenByMixin = new Set<string>();
 
   isVisible = () => !this._hiddenByMixin.size;
   getParent = () => this._parent;
