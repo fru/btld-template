@@ -64,31 +64,40 @@ class VNode {
   ) {}
 }
 
-// Attach
-
-interface VContainer {
-  componentRoot?: Node;
-  getRoots(onlyFirst: boolean, result?: VNode[]): VNode[];
-  getRootAfterThis(): VNode | undefined;
-  findPossibleSibling(): VContainer | undefined;
-  findComponentRoot(): Node | undefined;
-  attachRoots(): void;
-  attachNodeChildren(): void;
-  attachNodeListeners(): void;
-}
-
-import './3-vdom-attach';
-
 // Clone
 
 interface VContainer {
   clone(deep: boolean): VContainer;
   cloneRecurse(from: VContainer): void;
+  attachNodeChildren(): void;
+  attachNodeListeners(): void;
 }
 
-import './3-vdom-clone';
+VContainer.prototype.clone = function (this: VContainer, deep) {
+  let container = new VContainer();
+  let nodes = this.getNodes().map(original => {
+    let { self, next, parent, children } = original;
+    let node = original.node.cloneNode() as Text | Element;
+    return new VNode(container, self, next, parent, [...children], node);
+  });
+  container.setNodes(nodes);
+  container.attachNodeChildren();
+  container.attachNodeListeners();
+  if (deep) container.cloneRecurse(this);
+  return container;
+};
 
-export { VContainer, VNode };
+VContainer.prototype.cloneRecurse = function (this: VContainer, from) {
+  from.getNested().forEach(n => this.append(n.clone(true)));
+};
+
+VContainer.prototype.attachNodeChildren = function (this: VContainer) {
+  // TODO
+};
+
+VContainer.prototype.attachNodeListeners = function (this: VContainer) {
+  // TODO
+};
 
 // Reattach
 
@@ -99,8 +108,6 @@ interface VContainer {
   findPossibleSibling(): VContainer | undefined;
   findComponentRoot(): Node | undefined;
   attachRoots(): void;
-  attachNodeChildren(): void;
-  attachNodeListeners(): void;
 }
 
 VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
@@ -135,16 +142,12 @@ VContainer.prototype.getRootAfterThis = function (this: VContainer) {
 VContainer.prototype.attachRoots = function (this: VContainer) {
   // Check visiblilty
   let component = this.findComponentRoot();
-  if (!component) return;
-  let after = this.getRootAfterThis();
-  let roots = this.getRoots(false).map(r => r.node);
-  roots.forEach(r => component!.insertBefore(r, after?.node || null));
-};
-
-VContainer.prototype.attachNodeChildren = function (this: VContainer) {
-  // TODO
-};
-
-VContainer.prototype.attachNodeListeners = function (this: VContainer) {
-  // TODO
+  if (component && this.isVisible()) {
+    let after = this.getRootAfterThis();
+    let roots = this.getRoots(false).map(r => r.node);
+    roots.forEach(r => component!.insertBefore(r, after?.node || null));
+  } else {
+    // TODO get invisible roots
+    // node.parentElement.removeChild(node)
+  }
 };
