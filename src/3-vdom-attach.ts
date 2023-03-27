@@ -1,11 +1,6 @@
-import type { VContainer, VNode } from './2-vdom';
+import { VContainer } from './2-vdom';
 
-export { getRoots, findPossibleSibling, findComponentRoot };
-export { getRootAfterThis, attachRoots };
-
-type Opts = { onlyFirst?: boolean; includeInvisible?: boolean };
-
-function getRoots(this: VContainer, opts: Opts, o: VNode[] = []): VNode[] {
+VContainer.prototype.getRoots = function (this: VContainer, opts, o = []) {
   if (this.isVisible() || opts.includeInvisible) {
     if (!o.length || !opts.onlyFirst) {
       if (this.hasNested()) {
@@ -16,27 +11,27 @@ function getRoots(this: VContainer, opts: Opts, o: VNode[] = []): VNode[] {
     }
   }
   return o;
-}
+};
 
-function findPossibleSibling(this: VContainer): VContainer | undefined {
+VContainer.prototype.findPossibleSibling = function (this: VContainer) {
   let parent = this.getParent();
   let sibling = this.getSibling();
   return sibling || (parent && parent.findPossibleSibling());
-}
+};
 
-function findComponentRoot(this: VContainer): Node | undefined {
+VContainer.prototype.findComponentRoot = function (this: VContainer) {
   let parent = this.getParent();
   return parent ? parent.findComponentRoot() : this.componentRoot;
-}
+};
 
-function getRootAfterThis(this: VContainer): VNode | undefined {
+VContainer.prototype.getRootAfterThis = function (this: VContainer) {
   let sibling = this.findPossibleSibling();
   if (!sibling) return;
   let first = sibling.getRoots({ onlyFirst: true });
   return first[0] || sibling.getRootAfterThis();
-}
+};
 
-function attachRoots(this: VContainer): void {
+VContainer.prototype.attachRoots = function (this: VContainer) {
   let component = this.findComponentRoot();
   if (component && this.isVisible()) {
     let after = this.getRootAfterThis();
@@ -46,4 +41,4 @@ function attachRoots(this: VContainer): void {
     let roots = this.getRoots({ includeInvisible: true }).map(r => r.node);
     roots.forEach(r => r.remove());
   }
-}
+};
