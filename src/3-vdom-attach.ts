@@ -1,23 +1,13 @@
+import { VContainer } from './2-vdom';
 
-import type {}
-
-interface VContainer {
-  componentRoot?: Node;
-  getRoots(onlyFirst: boolean, result?: VNode[]): VNode[];
-  getRootAfterThis(): VNode | undefined;
-  findPossibleSibling(): VContainer | undefined;
-  findComponentRoot(): Node | undefined;
-  attachRoots(): void;
-  attachNodeChildren(): void;
-  attachNodeListeners(): void;
-}
-
-VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
-  if (this.isVisible() && (!onlyFirst || !o.length)) {
-    if (this.hasNested()) {
-      this.getNested().forEach(n => n.getRoots(onlyFirst, o));
-    } else {
-      o.push(...this.getNodes().filter(n => !n.parent));
+VContainer.prototype.getRoots = function (this: VContainer, opts, o = []) {
+  if (this.isVisible() || opts.includeInvisible) {
+    if (!o.length || !opts.onlyFirst) {
+      if (this.hasNested()) {
+        this.getNested().forEach(n => n.getRoots(opts, o));
+      } else {
+        o.push(...this.getNodes().filter(n => !n.parent));
+      }
     }
   }
   return o;
@@ -37,23 +27,18 @@ VContainer.prototype.findComponentRoot = function (this: VContainer) {
 VContainer.prototype.getRootAfterThis = function (this: VContainer) {
   let sibling = this.findPossibleSibling();
   if (!sibling) return;
-  let first = sibling.getRoots(true);
+  let first = sibling.getRoots({ onlyFirst: true });
   return first[0] || sibling.getRootAfterThis();
 };
 
 VContainer.prototype.attachRoots = function (this: VContainer) {
-  // Check visiblilty
   let component = this.findComponentRoot();
-  if (!component) return;
-  let after = this.getRootAfterThis();
-  let roots = this.getRoots(false).map(r => r.node);
-  roots.forEach(r => component!.insertBefore(r, after?.node || null));
-};
-
-VContainer.prototype.attachNodeChildren = function (this: VContainer) {
-  // TODO
-};
-
-VContainer.prototype.attachNodeListeners = function (this: VContainer) {
-  // TODO
+  if (component && this.isVisible()) {
+    let after = this.getRootAfterThis();
+    let roots = this.getRoots({}).map(r => r.node);
+    roots.forEach(r => component!.insertBefore(r, after?.node || null));
+  } else {
+    let roots = this.getRoots({ includeInvisible: true }).map(r => r.node);
+    roots.forEach(r => r.remove());
+  }
 };
