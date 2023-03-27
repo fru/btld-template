@@ -1,16 +1,4 @@
-
-import type {}
-
-interface VContainer {
-  componentRoot?: Node;
-  getRoots(onlyFirst: boolean, result?: VNode[]): VNode[];
-  getRootAfterThis(): VNode | undefined;
-  findPossibleSibling(): VContainer | undefined;
-  findComponentRoot(): Node | undefined;
-  attachRoots(): void;
-  attachNodeChildren(): void;
-  attachNodeListeners(): void;
-}
+import { VContainer, VNode } from './2-vdom';
 
 VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
   if (this.isVisible() && (!onlyFirst || !o.length)) {
