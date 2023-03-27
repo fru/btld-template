@@ -1,4 +1,8 @@
-VContainer.prototype.clone = function (this: VContainer, deep) {
+import { VContainer, VNode } from './2-vdom';
+
+export { clone, cloneRecurse, attachNodeChildren, attachNodeListeners };
+
+function clone(this: VContainer, deep: boolean): VContainer {
   let container = new VContainer();
   let nodes = this.getNodes().map(original => {
     let { self, next, parent, children } = original;
@@ -10,8 +14,16 @@ VContainer.prototype.clone = function (this: VContainer, deep) {
   container.attachNodeListeners();
   if (deep) container.cloneRecurse(this);
   return container;
-};
+}
 
-VContainer.prototype.cloneRecurse = function (this: VContainer, from) {
+function cloneRecurse(this: VContainer, from: VContainer) {
   from.getNested().forEach(n => this.append(n.clone(true)));
-};
+}
+
+function attachNodeChildren(this: VContainer) {
+  // TODO
+}
+
+function attachNodeListeners(this: VContainer) {
+  // TODO
+}
