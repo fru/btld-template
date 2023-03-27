@@ -19,14 +19,14 @@ class VContainer {
     if (child._parent) child.detach();
     child._parent = this;
     this._nested.push(child);
-    this.repositionRoots();
+    this.attachRoots();
   }
 
   detach() {
     if (this._parent) {
       this._parent._nested.splice(this.index()!, 1);
       this._parent = undefined;
-      this.repositionRoots();
+      this.attachRoots();
     }
   }
 
@@ -35,14 +35,14 @@ class VContainer {
     if (from >= 0 && to >= 0 && from <= max && to < max) {
       let moved = this._nested.splice(from, 1)[0];
       this._nested.splice(to, 0, moved);
-      this.repositionRoots();
+      this.attachRoots();
     }
   }
 
   setHiddenByMixin(mixin: string, hidden: boolean) {
     let s = this._hiddenByMixin;
     hidden ? s.delete(mixin) : s.add(mixin);
-    this.repositionRoots();
+    this.attachRoots();
   }
 }
 
@@ -64,6 +64,8 @@ class VNode {
   ) {}
 }
 
+export { VContainer, VNode };
+
 // Clone
 
 interface VContainer {
@@ -75,11 +77,12 @@ VContainer.prototype.clone = function (this: VContainer, deep) {
   let container = new VContainer();
   let nodes = this.getNodes().map(original => {
     let { self, next, parent, children } = original;
-    let node = original.node && (original.node.cloneNode() as Text | Element);
+    let node = original.node.cloneNode() as Text | Element;
     return new VNode(container, self, next, parent, [...children], node);
   });
-  // !!!!!! TODO attach child nodes
   container.setNodes(nodes);
+  container.attachNodeChildren();
+  container.attachNodeListeners();
   if (deep) container.cloneRecurse(this);
   return container;
 };
@@ -90,11 +93,15 @@ VContainer.prototype.cloneRecurse = function (this: VContainer, from) {
 
 // Reattach
 
-type Position = { parent: VNode; next?: VNode };
 interface VContainer {
+  componentRoot?: Node;
   getRoots(onlyFirst: boolean, result?: VNode[]): VNode[];
   getRootAfterThis(): VNode | undefined;
-  repositionRoots(): void;
+  findPossibleSibling(): VContainer | undefined;
+  findComponentRoot(): Node | undefined;
+  attachRoots(): void;
+  attachNodeChildren(): void;
+  attachNodeListeners(): void;
 }
 
 VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
@@ -108,27 +115,37 @@ VContainer.prototype.getRoots = function (this: VContainer, onlyFirst, o = []) {
   return o;
 };
 
-function findPossibleSibling(current?: VContainer) {
-  while (current) {
-    if (current.getSibling()) return current.getSibling();
-    current = current.getParent()!;
-  }
-}
-
-VContainer.prototype.getRootAfterThis = function (this: VContainer) {
-  let sibling = findPossibleSibling();
-  if (sibling) {
-    let first = sibling.getRoots(true);
-    return first[0] || sibling.getRootAfterThis();
-  }
+VContainer.prototype.findPossibleSibling = function (this: VContainer) {
+  let parent = this.getParent();
+  let sibling = this.getSibling();
+  return sibling || (parent && parent.findPossibleSibling());
 };
 
-VContainer.prototype.repositionRoots = function (this: VContainer) {
-  // Highest VContainer gets a VShadowRoot
+VContainer.prototype.findComponentRoot = function (this: VContainer) {
+  let parent = this.getParent();
+  return parent ? parent.findComponentRoot() : this.componentRoot;
+};
 
+VContainer.prototype.getRootAfterThis = function (this: VContainer) {
+  let sibling = this.findPossibleSibling();
+  if (!sibling) return;
+  let first = sibling.getRoots(true);
+  return first[0] || sibling.getRootAfterThis();
+};
+
+VContainer.prototype.attachRoots = function (this: VContainer) {
   // Check visiblilty
+  let component = this.findComponentRoot();
+  if (!component) return;
   let after = this.getRootAfterThis();
   let roots = this.getRoots(false).map(r => r.node);
-  let component = document.body; // TODO how to get the shadowRoot??? and check if attached
-  roots.forEach(r => component.insertBefore(r, after?.node || null));
+  roots.forEach(r => component!.insertBefore(r, after?.node || null));
+};
+
+VContainer.prototype.attachNodeChildren = function (this: VContainer) {
+  // TODO
+};
+
+VContainer.prototype.attachNodeListeners = function (this: VContainer) {
+  // TODO
 };
