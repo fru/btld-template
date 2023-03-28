@@ -17,23 +17,23 @@ VContainer.prototype.getRoots = getRoots();
 VContainer.prototype.getVisibleRoots = getRoots(true);
 VContainer.prototype.getFirstRoot = getRoots(true, true);
 
-VContainer.prototype.findSibling = function (this: VContainer) {
+VContainer.prototype.findSibling = function () {
   let parent = this.getParent();
   let sibling = this.getSibling();
   return sibling || (parent && parent.findSibling());
 };
 
-VContainer.prototype.findComponentRoot = function (this: VContainer) {
+VContainer.prototype.findComponentRoot = function () {
   let parent = this.getParent();
   return parent ? parent.findComponentRoot() : this.componentRoot;
 };
 
-VContainer.prototype.getRootAfterThis = function (this: VContainer) {
+VContainer.prototype.getRootAfterThis = function () {
   let sibling = this.findSibling();
   return sibling && (sibling.getFirstRoot()[0] || sibling.getRootAfterThis());
 };
 
-VContainer.prototype.attachRoots = function (this: VContainer) {
+VContainer.prototype.attachRoots = function () {
   let component = this.findComponentRoot();
   if (component && this.isVisible()) {
     let after = this.getRootAfterThis();

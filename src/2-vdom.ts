@@ -9,6 +9,14 @@ export class VNode {
   ) {}
 }
 
+export interface VNode {
+  createCallbacks: ((node: Element | Text) => void)[];
+  onCreate(this: VNode, cb: (node: Element | Text) => void): void;
+  triggerCreate(this: VNode): void;
+  clone(this: VNode, into: VContainer): VNode;
+  attachChildren(this: VNode): void;
+}
+
 export class VContainer {
   _parent: VContainer | undefined;
   _nested: VContainer[] = [];
@@ -27,36 +35,34 @@ export class VContainer {
 
 export interface VContainer {
   append(this: VContainer, child: VContainer): void;
-  detach(): void;
-  move(from: number, to: number): void;
-  setHiddenByMixin(mixin: string, hidden: boolean): void;
+  detach(this: VContainer): void;
+  move(this: VContainer, from: number, to: number): void;
+  setHiddenByMixin(this: VContainer, mixin: string, hidden: boolean): void;
 }
 
 // Attach
 
 export interface VContainer {
   componentRoot?: Node;
-  getRoots(): VNode[];
-  getVisibleRoots(): VNode[];
-  getFirstRoot(): VNode[];
-  findSibling(): VContainer | undefined;
-  findComponentRoot(): Node | undefined;
-  getRootAfterThis(): VNode | undefined; // insertBefore
-  attachRoots(): void;
+  getRoots(this: VContainer): VNode[];
+  getVisibleRoots(this: VContainer): VNode[];
+  getFirstRoot(this: VContainer): VNode[];
+  findSibling(this: VContainer): VContainer | undefined;
+  findComponentRoot(this: VContainer): Node | undefined;
+  getRootAfterThis(this: VContainer): VNode | undefined;
+  attachRoots(this: VContainer): void;
 }
 
 // Clone
 
 export interface VContainer {
-  clone(deep: boolean): VContainer;
-  cloneRecurse(from: VContainer): void;
-  attachNodeChildren(): void;
-  attachNodeListeners(): void;
+  clone(this: VContainer, deep: boolean): VContainer;
+  cloneRecurse(this: VContainer, from: VContainer): void;
 }
 
 // TODO
 
 export interface VContainer {
-  setNodes(nodes: VNode[]): void;
-  getNodes(): VNode[];
+  setNodes(this: VContainer, nodes: VNode[]): void;
+  getNodes(this: VContainer): VNode[];
 }
