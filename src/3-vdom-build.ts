@@ -29,3 +29,5 @@ VContainer.prototype.setHiddenByMixin = function (mixin, hidden) {
   hidden ? s.delete(mixin) : s.add(mixin);
   this.attachRoots();
 };
+
+// TODO Add more helper used by parser

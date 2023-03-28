@@ -23,6 +23,8 @@ export class VContainer {
   getSibling = () => this._parent && this._parent._nested[this.index()! + 1];
 }
 
+// Build
+
 export interface VContainer {
   append(this: VContainer, child: VContainer): void;
   detach(): void;
@@ -30,16 +32,20 @@ export interface VContainer {
   setHiddenByMixin(mixin: string, hidden: boolean): void;
 }
 
-type GetRootOpts = { onlyFirst?: boolean; includeInvisible?: boolean };
+// Attach
 
 export interface VContainer {
-  getRoots(opts: GetRootOpts, result?: VNode[]): VNode[];
   componentRoot?: Node;
-  getRootAfterThis(): VNode | undefined;
-  findPossibleSibling(): VContainer | undefined;
+  getRoots(): VNode[];
+  getVisibleRoots(): VNode[];
+  getFirstRoot(): VNode[];
+  findSibling(): VContainer | undefined;
   findComponentRoot(): Node | undefined;
+  getRootAfterThis(): VNode | undefined; // insertBefore
   attachRoots(): void;
 }
+
+// Clone
 
 export interface VContainer {
   clone(deep: boolean): VContainer;
@@ -47,6 +53,8 @@ export interface VContainer {
   attachNodeChildren(): void;
   attachNodeListeners(): void;
 }
+
+// TODO
 
 export interface VContainer {
   setNodes(nodes: VNode[]): void;
