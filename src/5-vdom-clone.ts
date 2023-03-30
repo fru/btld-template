@@ -8,7 +8,7 @@ VContainer.prototype.clone = function (deep) {
     return new VNode(container, self, next, parent, [...children], node);
   });
   container.setNodes(nodes);
-  // TODO !!!! Clone state change
+  // TODO !!!! Clone state change listener
   nodes.forEach(n => n.triggerCreate());
   if (deep) container.cloneRecurse(this);
   return container;
