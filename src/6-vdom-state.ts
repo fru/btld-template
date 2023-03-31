@@ -23,30 +23,32 @@ export class State {
   }
 }
 
-const isEdited = (v: unknown) => v instanceof Edited;
+// Why Edited? Why not just full unfreeze and refreeze?
+// Performance => Edited marks retrieved parts of state tree
 
-function ensureEdited(v: unknown): unknown {
-  if (isEdited(v) || v === null || typeof v !== 'object') return v;
-  return new Edited(freezeDeep(v) as object);
+function ensureEdited(o: object, p: string | symbol): unknown {
+  if (o[p] instanceof Edited) return o[p];
+  if (o[p] === null || typeof o[p] !== 'object') return o[p];
+  return (o[p] = new Edited([], o[p]));
 }
 
-// Problem 1: Performance new Edited(freezeDeep)
-// Problem 2: Loops Edited never stop freezing?
-
 class Edited {
-  constructor(public frozen: object) {}
-  static empty = () => new Edited(Object.freeze([]));
-  data = Array.isArray(this.frozen) ? [...this.frozen] : { ...this.frozen };
+  constructor(public frozen: object, public data = copyShallow(frozen)) {}
   proxy = new Proxy(this.data, {
     setPrototypeOf: () => false,
-    get: (o, prop) => (o[prop] = ensureEdited(o[prop])),
-    set: (o, prop, value) => ((o[prop] = ensureEdited(value)), true),
+    get: ensureEdited,
+    set: (o, prop, value) => ((o[prop] = value), true),
   });
+
+  // TODO improve:
+  // TODO fix infinite recursion
 
   freeze(): object {
     if (!Object.isFrozen(this.data)) {
       for (var p in this.data) {
-        if (isEdited(this.data[p])) this.data[p] = this.data[p].freeze();
+        if (this.data[p] instanceof Edited) {
+          this.data[p] = this.data[p].freeze();
+        }
       }
       if (isShallowEqual(this.frozen, this.data)) return this.frozen;
       Object.freeze(this.data);
@@ -71,7 +73,7 @@ function freezeDeep(v: unknown, maxDepth = 30): unknown {
   return Object.freeze(c);
 }
 
-function copyShallow(v: unknown): unknown {
+function copyShallow(v: unknown): any {
   if (v === null && typeof v !== 'object') return v;
   if (Array.isArray(v)) return v.slice(0);
   if (v instanceof Date) return { date: +v };
