@@ -26,14 +26,19 @@ export class State {
 // Why Edited? Why not just full unfreeze and refreeze?
 // Performance => Edited marks retrieved parts of state tree
 
+// TODO ensureEdited only on frozen objects?
+
 function ensureEdited(o: object, p: string | symbol): unknown {
-  if (o[p] instanceof Edited) return o[p];
-  if (o[p] === null || typeof o[p] !== 'object') return o[p];
-  return (o[p] = new Edited([], o[p]));
+  if (o[p] === null || typeof o[p] !== 'object' || !Object.isFrozen(o[p])) {
+    return o[p];
+  }
+  return (o[p] = new Edited(o[p]));
 }
 
 class Edited {
-  constructor(public frozen: object, public data = copyShallow(frozen)) {}
+  constructor(public frozen: object) {}
+
+  data = copyShallow(this.frozen);
   proxy = new Proxy(this.data, {
     setPrototypeOf: () => false,
     get: ensureEdited,
@@ -42,6 +47,7 @@ class Edited {
 
   // TODO improve:
   // TODO fix infinite recursion
+  // TODO use freezeDeep
 
   freeze(): object {
     if (!Object.isFrozen(this.data)) {
