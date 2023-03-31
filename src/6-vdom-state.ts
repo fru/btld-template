@@ -30,6 +30,9 @@ function ensureEdited(v: unknown): unknown {
   return new Edited(freezeDeep(v) as object);
 }
 
+// Problem 1: Performance new Edited(freezeDeep)
+// Problem 2: Loops Edited never stop freezing?
+
 class Edited {
   constructor(public frozen: object) {}
   static empty = () => new Edited(Object.freeze([]));
