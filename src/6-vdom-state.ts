@@ -1,202 +1,88 @@
-// Freeze full object tree
-class State {
-  frozen: unknown; // Freeze full object tree
-}
+export class State {
+  private _frozen: object;
+  private _update: Edited | undefined;
 
-// On update proxy is used to return EditPoint
+  listener?: (update: object) => void;
 
-// Create "State" from existing object // deep clone - delayed?
+  constructor(data: object) {
+    this._frozen = freezeDeep(data) as object;
+  }
 
-// Navigate using JUST normal properties: string | symbol
-// Navigation replaces typeof object with other proxies
-// Edit is disabled in these proxies
-// Not needed?: Parent, Prop or State references
+  get data() {
+    return this._frozen;
+  }
 
-function clone(data: unknown) {}
-
-function readonly(data: unknown) {
-  if (data === null || typeof data !== 'object') return data;
-  // TODO Clone data if it has not been done yet?
-  return new Proxy(clone(data), {
-    setPrototypeOf: () => false,
-    set: () => false,
-    get: (target, prop) => readonly(target[prop]),
-  });
-}
-
-type Prop = string | symbol;
-
-class EditContext {
-  constructor(
-    public data: unknown,
-    public parent: EditContext,
-    public prop?: Prop
-  ) {}
-  cascade(prop: Prop, value: any) {
-    // Check if we are still in edit mode
-    // TODO how to cascade, what to do when you reach the top?
+  update(action: (data: object) => void) {
+    if (this._update) return;
+    this._update = new Edited(this._frozen);
+    action(this._update.proxy);
+    let refrozen = this._update.freeze();
+    if (this.listener) this.listener(refrozen);
+    this._frozen = refrozen;
+    this._update = undefined;
   }
 }
 
-function writable(data: unknown, ctx: EditContext, prop?: Prop) {
-  if (data === null || typeof data !== 'object') return data;
-  let child = new EditContext(data, ctx, prop);
-  return new Proxy(data, {
+const isEdited = (v: unknown) => v instanceof Edited;
+
+function ensureEdited(v: unknown): unknown {
+  if (isEdited(v) || v === null || typeof v !== 'object') return v;
+  return new Edited(freezeDeep(v) as object);
+}
+
+class Edited {
+  constructor(public frozen: object) {}
+  static empty = () => new Edited(Object.freeze([]));
+  data = Array.isArray(this.frozen) ? [...this.frozen] : { ...this.frozen };
+  proxy = new Proxy(this.data, {
     setPrototypeOf: () => false,
-    get: (target, prop) => writable(target[prop], child, prop),
-    set: (_, prop, value) => (ctx.cascade(prop, value), true),
+    get: (o, prop) => (o[prop] = ensureEdited(o[prop])),
+    set: (o, prop, value) => ((o[prop] = ensureEdited(value)), true),
   });
-}
 
-class Writable {
-  constructor(private data: unknown, private parent?: Writable) {}
-
-  cascade(prop: string | symbol, value: unknown) {}
-}
-
-// Subscribe or Edit can only be done on state
-// Paths are required for subscripe
-// GetPath might as well be implemented here - should be faster
-
-// State is not Proxy
-
-type Section = { p: string | Symbol; ref?: true };
-type Path = Section[];
-type PathSegment = Path | Primitive;
-
-type Primitive = Prop | number | boolean | bigint;
-
-interface Frozen<T> {
-  $get(...paths: PathSegment[]): Frozen<T>;
-  $getState(): State<T>;
-  $update(action: (f: Frozen<T>) => void): void;
-  //[d: string | symbol]: Function | Frozen<T> | Primitive;
-}
-
-class Frozen<T> {
-  constructor(state: State<T>, parent: Frozen<T>, prop: Prop, data: object) {
-    return readonlyProxy(state, this, data);
+  freeze(): object {
+    if (!Object.isFrozen(this.data)) {
+      for (var p in this.data) {
+        if (isEdited(this.data[p])) this.data[p] = this.data[p].freeze();
+      }
+      if (isShallowEqual(this.frozen, this.data)) return this.frozen;
+      Object.freeze(this.data);
+    }
+    return this.data;
   }
 }
 
-function readonlyProxy<T>(state: State<T>, current: Frozen<T>, data: any) {
-  return new Proxy<Frozen<T>>(data, {
-    setPrototypeOf: () => false,
-    set: () => false,
-    get: (target, prop) => {
-      let data = target[prop];
-      if (data === null || typeof data !== 'object') return data;
-      return new Frozen(state, current, prop, data);
-    },
-  });
+function isFrozen(v: unknown, maxDepth: number): boolean {
+  if (!Object.isFrozen(v)) return false;
+  if (typeof v !== 'object') return true;
+  for (var p in v) if (!isFrozen(v[p], maxDepth - 1)) return false;
+  return true;
 }
 
-type OnPaths<T> = (Frozen<T> | Path)[];
-type OnAction<T> = (this: T, ...values: Frozen<T>[]) => void;
-
-interface State<T> extends Frozen<T> {
-  $context: T;
-  $clone(context: T): State<T>;
-  $subscribe(paths: OnPaths<T>, cb: OnAction<T>): void;
+function freezeDeep(v: unknown, maxDepth = 30): unknown {
+  if (maxDepth === 0) return;
+  if (isFrozen(v, maxDepth)) return v;
+  const c = copyShallow(v);
+  if (typeof c !== 'object') return c;
+  for (var p in c) c[p] = freezeDeep(c[p], maxDepth - 1);
+  return Object.freeze(c);
 }
 
-const fields = [
-  '$get',
-  '$update',
-  '$state',
-  '$path',
-  '$secretData',
-  '$context',
-  '$clone',
-  '$subscribe',
-];
+function copyShallow(v: unknown): unknown {
+  if (v === null && typeof v !== 'object') return v;
+  if (Array.isArray(v)) return v.slice(0);
+  if (v instanceof Date) return { date: +v };
+  return Object.assign({}, v);
+}
 
-/*class Frozen<T> {
-  constructor() {
-    return new Proxy(this, {
-      setPrototypeOf: () => false,
-      set: (target, prop, value) => {
-        if (fields.includes(prop as string)) return false;
-        this.$state.trigger();
-        console.log('PROXY SET', prop, value);
-        return true;
-      },
-
-      get: (target, prop) => {
-        console.log('PROXY GET', key);
-        return object[key];
-      },
-    });
-  }
-}*/
-
-// 1. Deep clone and freeze + Wrap in class: Frozen
-// 2. that + list of properties -> Freeze + Add to state
-// 3. that + list of properties -> Add getter + setter into state
-// 4. Frozen -> get ('test')
-// 5. Should we proxy to get properties: (x as Frozen).test -> y is Frozen
-
-// 6. new State() has one frozen obj, contains change listeners, can be cloned
-// 7. new Frozen() is path + state, can be used to edit state
-// 8. data() extracts immutable to be assigned to another State
-
-// 9. get(1, [{p: 't1'}, {p: 't2', ref: true}], 'val')
-// 10. special ":state"
-/*
-class Fro {
-  constructor() {
-    return new Proxy(this, {
-      set: (object, key, value) => {
-        object[key] = value;
-        console.log('PROXY SET', key, value);
-        return true;
-      },
-      get: (object, key) => {
-        console.log('PROXY GET', key);
-        return object[key];
-      },
+function isShallowEqual(a: any, b: any) {
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((v, i) => v === b[i]);
+  } else {
+    if (Object.keys(a).length !== Object.keys(b).length) return false;
+    return Object.keys(a).every(key => {
+      return b.hasOwnProperty(key) && a[key] === b[key];
     });
   }
 }
-
-class State extends Frozen {
-  constructor(root) {
-    super();
-  }
-  test = 'test';
-}
-
-let s = new State();
-
-class Array {
-  constructor() {
-    return new Proxy([1, 2, 3, 4, 5], {
-      set: (object, key, value, proxy) => {
-        object[key] = value;
-
-        console.log('PROXY SET', key, value);
-        return true;
-        return proxy;
-      },
-      get: (object, key) => {
-        console.log('PROXY GET', key);
-        return object[key];
-      },
-      deleteProperty: (object, key) => {
-        console.log('PROXY DELETE', key);
-        return true;
-      },
-    });
-  }
-}
-
-let a = new Array();
-
-a.splice(2, 2, 50);
-Array.from(a);*/
-
-// TODO all edits:
-// defineProperty
-// setPrototypeOf
-// preventExtensions
-//
