@@ -24,9 +24,7 @@ export class State {
 }
 
 // Why Edited? Why not just full unfreeze and refreeze?
-// Performance => Edited marks retrieved parts of state tree
-
-// TODO ensureEdited only on frozen objects?
+// Performance => Edited marks retrieved & unfrozen parts of frozen tree
 
 function ensureEdited(o: object, p: string | symbol): unknown {
   if (o[p] === null || typeof o[p] !== 'object' || !Object.isFrozen(o[p])) {
