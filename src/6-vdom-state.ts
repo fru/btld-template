@@ -1,109 +1,122 @@
+// Deep freeze uses symbols to mark a subtree as deepFrozen
+// Get returns proxy (without [[frozen]])
+
+// state.a.b.c = state.a
+// set [[frozen]] = false -> a,b (because get)
+// set [[actual]] = clone that is wrapped by proxy
+
+// Order 1
+// state.a.b.d = {t1: {t2: 3}};
+// state.a.b.d.t1 = state.z;
+
+// Order 2 (same as Order 1)
+// state.a.b.d = {t1: state.z};
+
+// ...t1 is not proxy - only ever proxy frozen objects
+// state.z called multiple times returns the same proxy
+// Now setting state.z.i1 will update the proxy target and therefore t1
+
+// state.test is still [[frozen]] - freeze() returns original
+
+// There is one cache of all proxies (proxyCache)
+// if state.a === state.b when updates they also produce the same proxy
+
+// NOW REFREEZING:
+
+// In order to refreeze every non froozen object has to be copied
+// But again another cache is used: in unfrozen -> out unfrozen
+
+// After copy freeze all objects in cloneCache
+
+// In order to reduce copying whem an object is placed in proxyCache
+// Place the clone that is proxyied directly in cloneCache[proxy] = underlying;
+
+// Even during update "functions" are still froozen
+// The original "functions" are frozen - they are not copied.
+
+// Iterate to freeze:
+//   - function: Object.freeze
+//   - else is primitve: return original
+//   - is in cloneCache return cloneCache
+//   - let clone = cloneShallow(object, cloneCache)
+//   - continue freeze iteration if not allready in hasIterated
+//   - return clone
+
+// Iterate cloneCache: Object.freeze + set [[frozen]] until allready [[frozen]]
+
+// State.update  running = true local: cloneCache, proxyCache
+// createWritableProxy(frozen, cloneCache, proxyCache)
+// freeze(cloneCache, hasIterated: Map) + freezeCache(cloneCache) inline in update?
+// copyShallow(cloneCache)
+
+// Order of definition
+function isObject(value: unknown): value is object {
+  return value !== null && typeof value === 'object';
+}
+
+function cloneObject(value: object): object {
+  if (Array.isArray(value)) return value.slice(0);
+  return Object.assign({}, value);
+}
+
+const frozen = Symbol('frozen');
+
+function freeze(value: unknown, cloneCache = new Map()) {
+  const stopIterate = new Set<object>();
+  const result = cloneFreeze(value);
+  cloneCache.forEach(c => ((c[frozen] = true), Object.freeze(c)));
+  return result;
+
+  function iterate(v: object, copy: object) {
+    if (stopIterate.has(v)) return copy;
+    for (var p in v) copy[p] = cloneFreeze(v[p]);
+    stopIterate.add(v);
+    return copy;
+  }
+
+  function cloneFreeze(v: unknown) {
+    if (v && v[frozen]) return v;
+    if (v instanceof Date) return Object.freeze({ date: +v });
+    if (!isObject(v)) return Object.freeze(v);
+    if (!cloneCache.has(v)) cloneCache.set(v, cloneObject(v));
+    return iterate(v, cloneCache.get(v));
+  }
+}
+
 export class State {
-  private _frozen: object;
-  private _update: Edited | undefined;
-
   listener?: (update: object) => void;
-
-  constructor(data: object) {
-    this._frozen = freezeDeep(data) as object;
+  constructor(private _frozen: object) {
+    this._frozen = freeze(_frozen);
   }
+  get = () => this._frozen;
 
-  get data() {
-    return this._frozen;
-  }
+  update(action: (data: object) => void): void {
+    const cloneCache = new Map();
+    const proxyCache = new Map();
+    const updateRoot = createUpdateProxy(this._frozen);
 
-  update(action: (data: object) => void) {
-    if (this._update) return;
-    this._update = new Edited(this._frozen);
-    action(this._update.proxy);
-    let refrozen = this._update.freeze(new Map());
+    action(updateRoot);
+    let refrozen = freeze(updateRoot, cloneCache);
     if (this.listener) this.listener(refrozen);
     this._frozen = refrozen;
-    this._update = undefined;
-  }
-}
 
-// Why Edited? Why not just full unfreeze and refreeze?
-// Performance => Edited marks retrieved & unfrozen parts of frozen tree
-
-const symbolEdited = Symbol('edited');
-
-const ensureEdited = (e: Edited) => (o: object, p: string | symbol) => {
-  if (p === symbolEdited) return e;
-  if (o[p] === null || typeof o[p] !== 'object' || !Object.isFrozen(o[p])) {
-    return o[p];
-  }
-  return (o[p] = new Edited(o[p]).proxy);
-};
-
-class Edited {
-  constructor(public frozen: object) {}
-
-  data = copyShallow(this.frozen);
-  proxy = new Proxy(this.data, {
-    setPrototypeOf: () => false,
-    get: ensureEdited(this),
-    set: (o, prop, value) => ((o[prop] = value), true),
-  });
-
-  freeze(cache: Map<any, any>): object {
-    let o = this.data;
-    if (!Object.isFrozen(o)) {
-      for (var p in o) {
-        if (o[p] !== null && typeof o[p] === 'object' && !o[p][symbolEdited]) {
-          o[p] = freezeDeep(o[p], cache);
-        }
+    function createUpdateProxy(frozen: object): object {
+      if (!proxyCache.has(frozen)) {
+        let clone = cloneObject(frozen);
+        let proxy = new Proxy(clone, {
+          setPrototypeOf: () => false,
+          get: (o, prop) => getIterator(o[prop], frozen[prop]),
+          set: (o, prop, value) => ((o[prop] = value), true),
+        });
+        cloneCache.set(proxy, clone);
+        proxyCache.set(frozen, proxy);
       }
-
-      // TODO Before we even freeze -> Calc and Set hasChanged in edited tree !!!!
-      // TODO freezeDeep can find frozen and unfrozen Edited.proxy objects
-
-      // Are there any changes in the Edited subtree?: hasChangesDeep
-      // We should probably not compare but use a flag
-      if (isEqual(this.frozen, o)) return (this.data = this.frozen);
-
-      Object.freeze(this.data); // Doing this early stops recursion;
-
-      for (var p in o) {
-        o[p] && (o[p][symbolEdited] as Edited).freeze(cache);
-      }
+      return proxyCache.get(frozen);
     }
-    return this.data;
-  }
-}
 
-function isFrozen(v: unknown, maxDepth: number): boolean {
-  if (!Object.isFrozen(v)) return false;
-  if (typeof v !== 'object') return true;
-  for (var p in v) if (!isFrozen(v[p], maxDepth - 1)) return false;
-  return true;
-}
-
-function freezeDeep(v: any, map?: Map<any, any>, maxDepth = 30): any {
-  if (maxDepth === 0) return;
-  if (isFrozen(v, maxDepth)) return v;
-  const c = copyShallow(v, map);
-  if (typeof c !== 'object') return c;
-  for (var p in c) c[p] = freezeDeep(c[p], map, maxDepth - 1);
-  return Object.freeze(c);
-}
-
-function copyShallow(v: any, map?: Map<any, any>): any {
-  let cached = (c: any) => (!map ? c : map.has(v) ? map[v] : (map[v] = c));
-  if (v === null && typeof v !== 'object') return v;
-  if (Array.isArray(v)) return cached(v.slice(0));
-  if (v instanceof Date) return cached({ date: +v });
-  return cached(Object.assign({}, v));
-}
-
-function isShallowEqual(a: any, b: any) {
-  if (Array.isArray(a)) {
-    if (!Array.isArray(b) || a.length !== b.length) return false;
-    return a.every((v, i) => v === b[i]);
-  } else {
-    if (Object.keys(a).length !== Object.keys(b).length) return false;
-    return Object.keys(a).every(key => {
-      return b.hasOwnProperty(key) && a[key] === b[key];
-    });
+    function getIterator(value: any, frozen: any) {
+      if (value !== frozen || !isObject(frozen)) return value;
+      return createUpdateProxy(frozen);
+    }
   }
 }
