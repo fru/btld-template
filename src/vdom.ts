@@ -36,15 +36,24 @@ function iterate({ childNodes }: Node): (Text | Element)[] {
   return [];
 }
 
-function parseNode(node: Node) {
+function parseNode(node: Node): ParsedNode {
   if (node.nodeType === 2) return parseText((node as Text).data);
-  let tag = node.nodeName;
-  if (node.nodeType === 1) return { tag, attrs: parseAttributes(node) };
+  if (node.nodeType !== 1) return null;
+  return { tag: node.nodeName, attrs: parseAttributes(node) };
 }
 
-function create(node: Node): () => (Text | Element)[] {
-  let creators = Array.from(node.childNodes, create);
-  let children = () => creators.map(x => x()).flat();
-  let data = parseNode(node);
-  return () => {};
+type CreateChildren = (() => (Text | Element)[]) | undefined;
+type ParsedNode = { tag?: string };
+
+function create({ childNodes }: Node): CreateChildren {
+  if (!childNodes.length) return undefined;
+  let result: (() => (Text | Element)[])[] = [];
+  for (const content of childNodes) {
+    let data = parseNode(content);
+    let children = create(content);
+    if (data) result.push(() => createNode(data, children));
+  }
+  return () => result.map(x => x()).flat();
 }
+
+function createNode(parsed: ParsedNode, children: CreateChildren) {}
