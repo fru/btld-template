@@ -16,3 +16,35 @@ class VContainer {
     return !this.hiddenBy.size && this.roots.length;
   }
 }
+
+function build(template: HTMLTemplateElement): VContainer {
+  let { content } = template;
+  function clone() {
+    let result = new VContainer();
+    // Parse Attr Template
+    result.clone = clone;
+    result.roots = iterate(content);
+    return result;
+  }
+  return clone();
+}
+
+function iterate({ childNodes }: Node): (Text | Element)[] {
+  for (const content of childNodes) {
+    (content as Element).replaceChildren(...iterate(content));
+  }
+  return [];
+}
+
+function parseNode(node: Node) {
+  if (node.nodeType === 2) return parseText((node as Text).data);
+  let tag = node.nodeName;
+  if (node.nodeType === 1) return { tag, attrs: parseAttributes(node) };
+}
+
+function create(node: Node): () => (Text | Element)[] {
+  let creators = Array.from(node.childNodes, create);
+  let children = () => creators.map(x => x()).flat();
+  let data = parseNode(node);
+  return () => {};
+}
