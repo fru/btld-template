@@ -23,37 +23,32 @@ function build(template: HTMLTemplateElement): VContainer {
     let result = new VContainer();
     // Parse Attr Template
     result.clone = clone;
-    result.roots = iterate(content);
+    result.roots = create(content)?.() || [];
     return result;
   }
   return clone();
 }
 
-function iterate({ childNodes }: Node): (Text | Element)[] {
-  for (const content of childNodes) {
-    (content as Element).replaceChildren(...iterate(content));
+type Children = (() => (Text | Element)[]) | undefined;
+type ParsedNode = { tag?: string };
+type ParsedText = {};
+
+function create({ childNodes }: Node): Children {
+  if (!childNodes.length) return undefined;
+  let result: (ParsedNode | ParsedText)[] = [];
+  for (const c of childNodes) {
+    if (c.nodeType === 2) result.push(parseText((c as Text).data));
+    if (c.nodeType === 1) {
+      let attrs = parseAttributes(c);
+      result.push({ tag: c.nodeName, attrs, children: create(c) });
+    }
   }
+  return () => result.map(x => createNodes(x)).flat();
+}
+
+function createNodes(parsed: ParsedNode | ParsedText): (Text | Element)[] {
+  let children = (parsed as any).children();
+  let node = undefined as any;
+  node.replaceChildren(...children);
   return [];
 }
-
-function parseNode(node: Node): ParsedNode {
-  if (node.nodeType === 2) return parseText((node as Text).data);
-  if (node.nodeType !== 1) return null;
-  return { tag: node.nodeName, attrs: parseAttributes(node) };
-}
-
-type CreateChildren = (() => (Text | Element)[]) | undefined;
-type ParsedNode = { tag?: string };
-
-function create({ childNodes }: Node): CreateChildren {
-  if (!childNodes.length) return undefined;
-  let result: (() => (Text | Element)[])[] = [];
-  for (const content of childNodes) {
-    let data = parseNode(content);
-    let children = create(content);
-    if (data) result.push(() => createNode(data, children));
-  }
-  return () => result.map(x => x()).flat();
-}
-
-function createNode(parsed: ParsedNode, children: CreateChildren) {}
