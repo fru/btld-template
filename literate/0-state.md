@@ -92,35 +92,41 @@ export class State {
     this._frozen = freeze(_frozen);
   }
   get = () => this._frozen;
-
-  update(action: (data: object) => void): void {
-    const cloneCache = new Map();
-    const proxyCache = new Map();
-    const updateRoot = createUpdateProxy(this._frozen);
-
-    action(updateRoot);
-    let refrozen = freeze(updateRoot, cloneCache);
-    if (this.listener) this.listener(refrozen);
-    this._frozen = refrozen;
-
-    function createUpdateProxy(frozen: object): object {
-      if (!proxyCache.has(frozen)) {
-        let clone = cloneObject(frozen);
-        let proxy = new Proxy(clone, {
-          setPrototypeOf: () => false,
-          get: (o, prop) => getIterator(o[prop], frozen[prop]),
-          set: (o, prop, value) => ((o[prop] = value), true),
-        });
-        cloneCache.set(proxy, clone);
-        proxyCache.set(frozen, proxy);
-      }
-      return proxyCache.get(frozen);
-    }
-
-    function getIterator(value: any, frozen: any) {
-      if (value !== frozen || !isObject(frozen)) return value;
-      return createUpdateProxy(frozen);
-    }
-  }
 }
+
+export interface State {
+  update(this: State, action: (data: object) => void): void;
+}
+```
+
+```typescript src
+State.prototype.update = function (action) {
+  const cloneCache = new Map();
+  const proxyCache = new Map();
+  const updateRoot = createUpdateProxy(this._frozen);
+
+  action(updateRoot);
+  let refrozen = freeze(updateRoot, cloneCache);
+  if (this.listener) this.listener(refrozen);
+  this._frozen = refrozen;
+
+  function createUpdateProxy(frozen: object): object {
+    if (!proxyCache.has(frozen)) {
+      let clone = cloneObject(frozen);
+      let proxy = new Proxy(clone, {
+        setPrototypeOf: () => false,
+        get: (o, prop) => getIterator(o[prop], frozen[prop]),
+        set: (o, prop, value) => ((o[prop] = value), true),
+      });
+      cloneCache.set(proxy, clone);
+      proxyCache.set(frozen, proxy);
+    }
+    return proxyCache.get(frozen);
+  }
+
+  function getIterator(value: any, frozen: any) {
+    if (value !== frozen || !isObject(frozen)) return value;
+    return createUpdateProxy(frozen);
+  }
+};
 ```
