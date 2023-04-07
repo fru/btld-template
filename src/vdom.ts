@@ -52,3 +52,22 @@ function createNodes(parsed: ParsedNode | ParsedText): (Text | Element)[] {
   node.replaceChildren(...children);
   return [];
 }
+
+/// 1. Run file and run inline tests
+/// 2. dom -> jsx -> jsx paths
+/// 3. Get path value (simple)
+/// 3. attrs state + no mixins -> render
+/// 4. bind text and attributes
+
+/*
+h(
+  "h1",
+  null,
+  h(
+    "span",
+    { test: "123", abc: true },
+    "Test"
+  ),
+  "123"
+);
+*/

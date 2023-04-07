@@ -1,5 +1,12 @@
 import * as esbuild from 'esbuild';
 import fs from 'node:fs';
+import minimist from 'minimist';
+
+var argv = minimist(process.argv.slice(2));
+
+console.log(argv);
+
+exit;
 
 let watch = process.argv[2] === 'watch';
 let markdown = language => ({
