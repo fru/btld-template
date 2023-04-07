@@ -3,22 +3,22 @@ import fs from 'node:fs';
 import minimist from 'minimist';
 
 var argv = minimist(process.argv.slice(2));
+var { tdd, watch } = argv;
 
-console.log(argv);
+let header = '';
+if (tdd) header += "import { assert } from 'chai';";
 
-exit;
-
-let watch = process.argv[2] === 'watch';
-let markdown = language => ({
+let markdown = languages => ({
   name: 'md-code-extract',
   setup(build) {
     build.onLoad({ filter: /\.md$/ }, async args => {
       let text = await fs.promises.readFile(args.path, 'utf8');
+      let language = '(' + languages.filter(x => x).join('|') + ')';
       let regex = new RegExp('```' + language + '([\\s\\S]+?)```', 'g');
-      let code = [...text.matchAll(regex)].map(m => m[1].trim());
+      let code = [...text.matchAll(regex)].map(m => m[2].trim());
 
       return {
-        contents: code.join('\n'),
+        contents: header + code.join('\n'),
         loader: 'ts',
       };
     });
@@ -27,10 +27,10 @@ let markdown = language => ({
 
 let mangleCache = JSON.parse(fs.readFileSync('./src/naming-cache.json'));
 let options = {
-  entryPoints: ['src/0-main.md'],
+  entryPoints: argv['_'],
   bundle: true,
-  outfile: 'dist/btld-template.js',
-  plugins: [markdown('typescript src')],
+  outfile: tdd ? 'dist/tdd.js' : 'dist/btld-template.js',
+  plugins: [markdown(['typescript src', tdd && 'typescript test'])],
   format: 'esm',
   minify: true,
   mangleProps: /_$/,

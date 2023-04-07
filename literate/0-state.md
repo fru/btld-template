@@ -85,6 +85,7 @@ function freeze(value: unknown, cloneCache = new Map()) {
 
 ```typescript test
 it('Should freeze objects', () => {
+  assert.equal(true, !!1);
   // TODO
 });
 

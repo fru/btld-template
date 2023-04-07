@@ -7,10 +7,10 @@
     "test": "playwright-test test/specification/*.js --runner mocha --watch",
     "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
     "build": "node esbuild.mjs",
-    "tdd-code": "npm run build -- --watch",
-    "tdd-test": "npm run build -- --watch --type=test --outfile=abc",
-    "tdd": "concurrently -P \"npm:tdd-* -- {*}\" -- literate/0",
-    "build-watch": "concurrently --kill-others \"node esbuild.mjs -w\" \"npm run test\""
+    "tdd-code": "npm run build -- literate/0-state.md --watch --tdd",
+    "tdd-test": "playwright-test dist/tdd.js --runner mocha --watch --cov",
+    "tdd": "concurrently --kill-others 'npm:tdd-*'",
+    "build-watch": "concurrently --kill-others \"node esbuild.mjs --watch\" \"npm run test\""
   },
   "author": "",
   "license": "ISC",
