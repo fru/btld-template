@@ -7,7 +7,10 @@
     "test": "playwright-test test/specification/*.js --runner mocha --watch",
     "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
     "build": "node esbuild.mjs",
-    "build-watch": "concurrently --kill-others \"node esbuild.mjs watch\" \"npm run test\""
+    "tdd-code": "npm run build -- --watch",
+    "tdd-test": "npm run build -- --watch --type=test --outfile=abc",
+    "tdd": "concurrently -P \"npm:tdd-* -- {*}\" -- literate/0-",
+    "build-watch": "concurrently --kill-others \"node esbuild.mjs -w\" \"npm run test\""
   },
   "author": "",
   "license": "ISC",
@@ -15,7 +18,11 @@
     "chai": "^4.3.7",
     "concurrently": "^7.6.0",
     "esbuild": "0.17.11",
+    "minimist": "^1.2.8",
     "mocha": "^10.2.0",
     "playwright-test": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.2"
   }
 }
