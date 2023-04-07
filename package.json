@@ -9,7 +9,7 @@
     "build": "node esbuild.mjs",
     "tdd-code": "npm run build -- --watch",
     "tdd-test": "npm run build -- --watch --type=test --outfile=abc",
-    "tdd": "concurrently -P \"npm:tdd-* -- {*}\" -- literate/0-",
+    "tdd": "concurrently -P \"npm:tdd-* -- {*}\" -- literate/0",
     "build-watch": "concurrently --kill-others \"node esbuild.mjs -w\" \"npm run test\""
   },
   "author": "",
