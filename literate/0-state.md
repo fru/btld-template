@@ -68,8 +68,9 @@ it('Copy is configurable', () => {
 TODO
 
 ```typescript src
-function freeze(value: unknown, cloneCache = new Map()) {
+function freeze(value: unknown) {
   const stopIterate = new Set<object>();
+  const cloneCache = new Map();
   const result = cloneFreeze(value);
   cloneCache.forEach(c => ((c[frozen] = true), Object.freeze(c)));
   return result;
@@ -129,34 +130,30 @@ export interface State {
 
 ```typescript src
 State.prototype.update = function (action) {
-  const cloneCache = new Map();
   const proxyCache = new Map();
   const updateRoot = createUpdateProxy(this._frozen);
 
   action(updateRoot);
-  let refrozen = freeze(updateRoot, cloneCache);
+  let refrozen = freeze(updateRoot);
   if (this.listener) this.listener(refrozen);
   this._frozen = refrozen;
 
   function createUpdateProxy(frozen: object): object {
     if (!proxyCache.has(frozen)) {
       let clone = cloneObject(frozen);
-      console.log(JSON.stringify(clone));
-      console.log(Object.getOwnPropertyDescriptor(clone, 'd'));
       let proxy = new Proxy(clone, {
         setPrototypeOf: () => false,
         get: (o, prop) => getIterator(o[prop], frozen[prop]),
         set: (o, prop, value) => ((o[prop] = value), true),
       });
-      cloneCache.set(proxy, clone);
       proxyCache.set(frozen, proxy);
     }
-    return proxyCache.get(frozen);
+    let res = proxyCache.get(frozen);
+    return res;
   }
 
   function getIterator(value: any, frozen: any) {
     if (value !== frozen || !isObject(frozen)) return value;
-    console.log('!!!!!', value, frozen);
     return createUpdateProxy(frozen);
   }
 };
@@ -166,10 +163,18 @@ State.prototype.update = function (action) {
 it('Updates should be possible', () => {
   let state = new State({ d: ['123'] });
   state.update(u => {
-    console.log(u.d);
-    //u.d.push('test');
+    u.d.push('test');
   });
   console.log(JSON.stringify(state.get()));
+
+  // Object
+  // State
+  // Mapping
+  // update
+  // modified
+  // Compare JSON modified === state
+  // update to recursive
+  // state.get === state.get.recursion
 });
 
 // Array operations should work the same
