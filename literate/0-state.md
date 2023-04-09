@@ -68,14 +68,14 @@ function freeze(value: unknown, cloneCache = new Map()) {
 
   function iterate(v: object, copy: object) {
     if (stopIterate.has(v)) return copy;
-    for (var p in v) copy[p] = cloneFreeze(v[p]);
     stopIterate.add(v);
+    for (var p in v) copy[p] = cloneFreeze(v[p]);
     return copy;
   }
 
   function cloneFreeze(v: unknown) {
     if (v && v[frozen]) return v;
-    if (v instanceof Date) return Object.freeze({ date: +v });
+    if (v instanceof Date) return v.toISOString();
     if (!isObject(v)) return Object.freeze(v);
     if (!cloneCache.has(v)) cloneCache.set(v, cloneObject(v));
     return iterate(v, cloneCache.get(v));
@@ -84,21 +84,22 @@ function freeze(value: unknown, cloneCache = new Map()) {
 ```
 
 ```typescript test
+let f = function () {};
+let d = { d2: { d3: [1, 2, 3, 4, 5] } };
+let data = { abc: 123, f, d, data: new Date() };
+let o = {};
+o.recurse = o;
+
 it('Should freeze objects', () => {
-  assert.equal(true, !!1);
-  // TODO
-});
-
-it('Should handle dates and functions', () => {
-  // TODO
-});
-
-it('Should reuse objects', () => {
-  // TODO
-});
-
-it('Should handle recursive data', () => {
-  // TODO
+  let lock = freeze(data);
+  let wrapped = freeze({ lock });
+  assert(Object.isFrozen(lock));
+  assert(Object.isFrozen(lock.f));
+  assert(Object.isFrozen(lock.d.d2.d3));
+  assert.equal(JSON.stringify(data), JSON.stringify(lock));
+  assert.equal(lock, wrapped.lock);
+  let circular = freeze(o);
+  assert.equal(circular, circular.recurse);
 });
 ```
 
