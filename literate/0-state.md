@@ -57,6 +57,14 @@ function cloneObject(value: object): object {
 const frozen = Symbol('frozen');
 ```
 
+```typescript test
+it('Copy is configurable', () => {
+  let frozen = Object.freeze([1234]);
+  let cloned = cloneObject(frozen);
+  cloned.push(2);
+});
+```
+
 TODO
 
 ```typescript src
@@ -133,6 +141,8 @@ State.prototype.update = function (action) {
   function createUpdateProxy(frozen: object): object {
     if (!proxyCache.has(frozen)) {
       let clone = cloneObject(frozen);
+      console.log(JSON.stringify(clone));
+      console.log(Object.getOwnPropertyDescriptor(clone, 'd'));
       let proxy = new Proxy(clone, {
         setPrototypeOf: () => false,
         get: (o, prop) => getIterator(o[prop], frozen[prop]),
@@ -146,6 +156,7 @@ State.prototype.update = function (action) {
 
   function getIterator(value: any, frozen: any) {
     if (value !== frozen || !isObject(frozen)) return value;
+    console.log('!!!!!', value, frozen);
     return createUpdateProxy(frozen);
   }
 };
@@ -153,18 +164,15 @@ State.prototype.update = function (action) {
 
 ```typescript test
 it('Updates should be possible', () => {
-  // TODO
+  let state = new State({ d: ['123'] });
+  state.update(u => {
+    console.log(u.d);
+    //u.d.push('test');
+  });
+  console.log(JSON.stringify(state.get()));
 });
 
-it('Array operations should work the same', () => {
-  // TODO
-});
-
-it('All should be froozen', () => {
-  // TODO
-});
-
-it('Listener is called', () => {
-  // TODO
-});
+// Array operations should work the same
+// All should be froozen
+// Listener is called
 ```
