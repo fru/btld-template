@@ -1,31 +1,33 @@
 # Reactivity aka. Model Change Detection
 
-One of the key differences between front-end frameworks is their approach to
-data synchronization and DOM manipulation.
+Reactivity is a key differentiator among front-end frameworks. Each framework
+has its unique approach to data synchronization and DOM manipulation.
 
-Our approach is heavily inspired by immer.js and copies and freezes all data
-that is used to render components. Updates are still possible using a proxy.
-This generates a new frozen state and only updates the properties that actually
-change, without creating unnecessary copies of the entire data structure,
-improving performance.
+Our approach is to copy and freeze all the data used to render components.
+Updates are still possible using proxies, which generates a new frozen state and
+only updates the changed properties. This helps improve performance and avoid
+unnecessary copying of the entire data structure. This is heavily inspired by
+the amazing [immer.js](https://github.com/immerjs/immer) library.
 
 ## Other Frameworks
 
-JQuery was often used to keep data in the DOM as long as possible and treat that
-as the single source of truth. React uses a virtual DOM and compares two
-versions to determine changes. Angular 2 efficiently re-evaluates expressions
-used in components, while Vue 2 uses a reactive system that watches properties
-accessed during rendering using getters and setters provided by
-`Object.defineProperty()`.
+Other frameworks have their own approaches. For example, JQuery was often used
+to keep data in the DOM as long as possible and treated it as the single source
+of truth. React, on the other hand, uses a virtual DOM and compares two versions
+to detect changes. Angular 2 efficiently re-evaluates expressions used in
+components. Vue 2 uses a reactive system that watches the properties accessed
+during rendering using getters and setters provided by Object.defineProperty().
 
-The approaches used by these frameworks for data synchronization and DOM
-manipulation can present challenges when dealing with deeply nested data.
+However, when dealing with deeply nested data, these approaches can present
+challenges.
 
-Redux, a state management library commonly used with React, addresses this by
-using pure reducers to not modify the current state directly, but rather produce
-a new state. Vue 3 improves on version two by using Proxies. Since these are
-used also during getting, this means that equality comparison might not be
-consistent.
+Redux, a state management library commonly used with React, addresses this issue
+by using pure reducers to produce a new state instead of modifying the current
+state directly.
+
+Vue 3 has enhanced its capabilities from version 2 by incorporating Proxies.
+Although, while retrieving data, Proxies are also employed which can lead to
+inconsistent equality comparisons.
 
 ## Interface
 
