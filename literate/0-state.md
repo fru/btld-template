@@ -3,11 +3,12 @@
 Reactivity is a key differentiator among front-end frameworks. Each framework
 has its unique approach to data synchronization and DOM manipulation.
 
-Our approach is to copy and freeze all the data used to render components.
-Updates are still possible using proxies, which generates a new frozen state and
-only updates the changed properties. This helps improve performance and avoid
-unnecessary copying of the entire data structure. This is heavily inspired by
-the amazing [immer.js](https://github.com/immerjs/immer) library.
+We employ a technique that involves freezing all the data utilized for rendering
+components. With the use of proxies, updates can still be made without the need
+to copy the entire data structure. Instead, a new frozen state is generated, and
+only the modified properties are updated, leading to improved performance. This
+is heavily inspired by the amazing [immer.js](https://github.com/immerjs/immer)
+library.
 
 ## Other Frameworks
 
