@@ -1,21 +1,21 @@
-# Reactivity aka. model change detection
+# Reactivity aka. Model Change Detection
 
 One of the key differences between front-end frameworks is their approach to
 data synchronization and DOM manipulation.
 
-Our approuch is heavily inspired by immer.js and copies and freezes all data
+Our approach is heavily inspired by immer.js and copies and freezes all data
 that is used to render components. Updates are still possible using a proxy.
-This generates a new frozen state and only updates the properties that actualy
+This generates a new frozen state and only updates the properties that actually
 change, without creating unnecessary copies of the entire data structure,
 improving performance.
 
-## Other frameworks
+## Other Frameworks
 
 JQuery was often used to keep data in the DOM as long as possible and treat that
 as the single source of truth. React uses a virtual DOM and compares two
-versions to determine changes, Angular 2 is efficiently re-evaluating
-expressions used in components, while Vue 2 uses a reactive system that watches
-properties accessed during rendering using getters and setters provided by
+versions to determine changes. Angular 2 efficiently re-evaluates expressions
+used in components, while Vue 2 uses a reactive system that watches properties
+accessed during rendering using getters and setters provided by
 `Object.defineProperty()`.
 
 The approaches used by these frameworks for data synchronization and DOM
@@ -23,8 +23,8 @@ manipulation can present challenges when dealing with deeply nested data.
 
 Redux, a state management library commonly used with React, addresses this by
 using pure reducers to not modify the current state directly, but rather produce
-a new state. Vue 3 is improving on version two by using Proxies. Since these are
-used also during getting this means that equality comparison might not be
+a new state. Vue 3 improves on version two by using Proxies. Since these are
+used also during getting, this means that equality comparison might not be
 consistent.
 
 ## Interface
