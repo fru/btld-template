@@ -12,12 +12,11 @@ library.
 
 ## Other Frameworks
 
-Other frameworks have their own approaches. For example, JQuery was often used
-to keep data in the DOM as long as possible and treated it as the single source
-of truth. React, on the other hand, uses a virtual DOM and compares two versions
-to detect changes. Angular 2 efficiently re-evaluates expressions used in
-components. Vue 2 uses a reactive system that watches the properties accessed
-during rendering using getters and setters provided by Object.defineProperty().
+Other frameworks have their own approaches. For example, React uses a virtual
+DOM and compares two versions to detect changes. Angular 2 re-evaluates
+expressions used in components and improves performence with VM inline caching.
+Vue 2 uses a reactive system that watches the properties accessed during
+rendering using getters and setters provided by Object.defineProperty().
 
 However, when dealing with deeply nested data, these approaches can present
 challenges.
@@ -32,7 +31,29 @@ inconsistent equality comparisons.
 
 ## Interface
 
-The `State` class is used to freeze any data.
+We introduce the `State` class which is used to freeze initial data.
+
+```typescript
+let data = new State({ tasks: [] });
+data.get('/tasks/length');
+data.get().tasks.length;
+
+data.set(d => d.tasks.push('New Task'));
+data.set('tasks', d => d.push('New Task'));
+data.set('tasks', ['New Task']);
+
+let listener = data.listener(action, index, formaters);
+listener.watch('/tasks');
+listener.watch('/tasks/:index');
+```
+
+Layers:
+
+1. Freeze & Update + Single Callback
+2. Parse paths & caching
+3. Compile path lookup for performance
+4. Call functions when a path directly points to it
+5. Get and set with paths and listen to gets
 
 ### Old
 
