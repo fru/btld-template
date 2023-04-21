@@ -31,21 +31,19 @@ Our approach relies on freezing the data first and then unfreezing it for the
 update proxy, just to freeze again after the changes are done.
 
 ```typescript
-function isObject(value: unknown): value is object {
+function isObjectOrArray(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
-function cloneObject(value: object): object {
+function shallowCloneObject(value: object): object {
   if (Array.isArray(value)) return value.slice(0);
   return Object.assign({}, value);
 }
 ```
 
-
-
-We set the symbol `frozen` to true on any frozen object. This indicates that the
-whole subtree is frozen. Testing for `Object.isFrozen()` only checks the shallow
-object.
+We set the symbol `[[frozen]]` to true on any frozen object. This indicates that
+the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
+shallow object.
 
 ```typescript
 const frozen = Symbol('frozen');
@@ -58,51 +56,69 @@ function freezeCache(changedObjectCache: Map<object, object>) {
 }
 ```
 
-
-
+The next symbol `[[unchanged]]` is used to mark if a shallow object has been
+modified trough the update proxy using the traps `set` and `deleteProperty`
 
 ```typescript
 const unchanged = Symbol('unchanged');
 
+let proxyTraps = {
+  deleteProperty: function (target) {
+    target[unchanged] = false;
+    return Reflect.deleteProperty(...arguments);
+  },
+  set: function (target) {
+    target[unchanged] = false;
+    return Reflect.set(...arguments);
+  },
+};
 
-```
-
-
-
-
-Recursively clones all changed objects
-
-```typescript
-/**
- * Stops if: value is already frozen
- * Stops if: value and all deep children have unchanged marker set
- * Stops if: changedObjectCache contains value
- * @return {false | unknown} false if unchanged, otherwise clone
- */
-function cloneChanged(value: unknown, changedObjectCache: Map<object, object>) {
-  if (value && value[frozen]) return false;
-  if (!isObject(value)) return false;
-  if (!changedObjectCache.has(value)) {
-    let unchanged = value[unchanged];
-    let cloned = cloneObject(value);
-
-    for (var prop in value) {
-      let changed = cloneChanged(value, changedObjectCache);
-      if (changed) {
-        unchanged = false;
-        cloned[prop] = changed;
-      }
-    }
-
-    if (unchanged) return false;
-    changedObjectCache.set(value, cloned);
-  }
-  return changedObjectCache.get(value);
+function shallowUnfreeze(frozen: unknown) {
+  if (!isObjectOrArray(frozen)) return frozen; // Does not unfreeze functions
+  let clone = shallowCloneObject(frozen);
+  clone[unchanged] = frozen;
+  return clone;
 }
 ```
 
+Now its time to recursively clone all objects that that are not fully marked as
+unchanged. This is used when freezing an object tree.
 
+```typescript
+function deepFreezeNeeded(value: unknown) {
+  return value && !value[frozen] && isObjectOrArray(value);
+}
 
+/**
+ * @return {unknown} returns clone or unchanged frozen value
+ * Recurse with the following stop conditions:
+ * - value does not need deep freeze
+ * - changedObjectCache contains value
+ * - value and all deep children have unchanged marker set
+ */
+function cloneChanged(value: unknown, changedObjectCache: Map<object, object>) {
+  if (!deepFreezeNeeded(value)) return Object.freeze(value);
+  if (changedObjectCache.has(value)) return changedObjectCache.get(value);
+
+  // We clone and add to cache early, this also stops infinite recursion
+  let cloned = shallowCloneObject(value);
+  changedObjectCache.set(value, cloned);
+
+  // Recurse and determine if unchanged
+  let unchanged = value[unchanged];
+  for (var prop in value) {
+    let propClone = cloneChanged(value[prop], changedObjectCache);
+    if (deepFreezeNeeded(propClone)) {
+      unchanged = false;
+    }
+    cloned[prop] = propClone;
+  }
+
+  // Cleanup cache and return
+  if (unchanged) changedObjectCache.delete(value);
+  return unchanged || cloned;
+}
+```
 
 ```typescript
 function cloneUnknown(v: unknown, cloneCache: Map<object, object>) {
