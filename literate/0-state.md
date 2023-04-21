@@ -19,15 +19,11 @@ Vue 2 uses a reactive system that watches the properties accessed during
 rendering using getters and setters provided by Object.defineProperty().
 
 However, when dealing with deeply nested data, these approaches can present
-challenges.
-
-Redux, a state management library commonly used with React, addresses this issue
-by using pure reducers to produce a new state instead of modifying the current
-state directly.
-
-Vue 3 has enhanced its capabilities from version 2 by incorporating Proxies.
-Although, while retrieving data, Proxies are also employed which can lead to
-inconsistent equality comparisons.
+challenges. Redux, a state management library commonly used with React,
+addresses this issue by using pure reducers to produce a new state instead of
+modifying the current state directly. Vue 3 has enhanced its capabilities from
+version 2 by incorporating Proxies. Although, while retrieving data, Proxies are
+also employed which can lead to inconsistent equality comparisons.
 
 ## Interface
 
