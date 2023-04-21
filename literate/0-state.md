@@ -48,10 +48,10 @@ shallow object.
 ```typescript
 const frozen = Symbol('frozen');
 
-function freezeCache(changedObjectCache: Map<object, object>) {
-  changedObjectCache.forEach(changed => {
-    changed[frozen] = true;
-    Object.freeze(changed);
+function freezeCache(changed: ObjectCache) {
+  changed.forEach(obj => {
+    obj[frozen] = true;
+    Object.freeze(obj);
   }
 }
 ```
@@ -89,34 +89,41 @@ function deepFreezeNeeded(value: unknown) {
   return value && !value[frozen] && isObjectOrArray(value);
 }
 
+type ObjectCache = Map<object, object>;
+
 /**
- * @return {unknown} returns clone or unchanged frozen value
  * Recurse with the following stop conditions:
  * - value does not need deep freeze
  * - changedObjectCache contains value
  * - value and all deep children have unchanged marker set
  */
-function cloneChanged(value: unknown, changedObjectCache: Map<object, object>) {
-  if (!deepFreezeNeeded(value)) return Object.freeze(value);
-  if (changedObjectCache.has(value)) return changedObjectCache.get(value);
 
-  // We clone and add to cache early, this also stops infinite recursion
-  let cloned = shallowCloneObject(value);
-  changedObjectCache.set(value, cloned);
+function populateChanged(val: unknown, changed: ObjectCache): void {
+  if (!deepFreezeNeeded(val)) return;
+  if (!changed.has(val)) return;
+  changed.set(val, undefined);
 
-  // Recurse and determine if unchanged
   let unchanged = value[unchanged];
-  for (var prop in value) {
-    let propClone = cloneChanged(value[prop], changedObjectCache);
-    if (deepFreezeNeeded(propClone)) {
-      unchanged = false;
-    }
-    cloned[prop] = propClone;
+  for (var prop in val) {
+    populateChanged(val[prop], changed);
+    if (changed.has(val[prop])) unchanged = false;
   }
+  if (unchanged) changed.delete(val);
+}
 
-  // Cleanup cache and return
-  if (unchanged) changedObjectCache.delete(value);
-  return unchanged || cloned;
+function cloneChanged(val: unknown, changed: ObjectCache): unknown {
+  if (val instanceof Date) return val.toISOString();
+  if (typeof val === 'function') return Object.freeze(val); // Freeze functions
+  if (!deepFreezeNeeded(val)) return val;
+  if (!changed.has(val)) return val[unchanged];
+  if (!changed.get(val)) {
+    let cloned = shallowCloneObject(val);
+    changed.set(val, cloned);
+    for (var prop in cloned) {
+      cloned[prop] = cloneChanged(cloned[prop], changed);
+    }
+  }
+  return changed.get(val);
 }
 ```
 
