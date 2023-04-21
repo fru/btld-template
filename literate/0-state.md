@@ -10,7 +10,7 @@ only the modified properties are updated, leading to improved performance. This
 is heavily inspired by the amazing [immer.js](https://github.com/immerjs/immer)
 library.
 
-## Other Frameworks
+### Other Frameworks
 
 Other frameworks have their own approaches. For example, React uses a virtual
 DOM and compares two versions to detect changes. Angular 2 re-evaluates
@@ -24,6 +24,69 @@ addresses this issue by using pure reducers to produce a new state instead of
 modifying the current state directly. Vue 3 has enhanced its capabilities from
 version 2 by incorporating Proxies. Although, while retrieving data, Proxies are
 also employed which can lead to inconsistent equality comparisons.
+
+## A: Freezing
+
+Our approuch reliese on freezing the data first and then unfreezing it for the
+update proxy, just to freeze again after the changes are done.
+
+```typescript
+function isObject(value: unknown): value is object {
+  return value !== null && typeof value === 'object';
+}
+
+function cloneObject(value: object): object {
+  if (Array.isArray(value)) return value.slice(0);
+  return Object.assign({}, value);
+}
+```
+
+We set the symbol `frozen` to true on any frozen object. This indicates that the
+whole subtree is frozen. Testing for `Object.isFrozen()` only checks the shallow
+object.
+
+```typescript
+const frozen = Symbol('frozen');
+
+function cloneAny(v: unknown, cloneCache: Map<object, object>) {
+  if (v && v[frozen]) return v;
+  if (v instanceof Date) return v.toISOString();
+  if (!isObject(v)) return Object.freeze(v); // Functions are frozen
+  if (!cloneCache.has(v)) cloneCache.set(v, cloneObject(v));
+
+  return cloneCache.get(v);
+}
+```
+
+Now the actual implementation has to make sure that recursive data does not lead
+to an infinite loop. Every object that is encountered is added to `stopIterate`.
+
+```typescript
+function freeze(value: unknown) {
+  const stopIterate = new Set<object>();
+  const cloneCache = new Map();
+  const result = cloneFreeze(value);
+  cloneCache.forEach(c => ((c[frozen] = true), Object.freeze(c)));
+  return result;
+
+  function iterate(v: object, copy: object) {
+    if (stopIterate.has(v)) return copy;
+    stopIterate.add(v);
+    for (var p in v) copy[p] = cloneFreeze(v[p]);
+    return copy;
+  }
+
+  function cloneFreeze(v: unknown) {
+    if (v && v[frozen]) return v;
+    if (v instanceof Date) return v.toISOString();
+    if (!isObject(v)) return Object.freeze(v); // Functions are frozen
+    if (!cloneCache.has(v)) cloneCache.set(v, cloneObject(v));
+    return iterate(v, cloneCache.get(v));
+  }
+}
+```
+
+##
 
 ## Interface
 
@@ -99,19 +162,6 @@ copyShallow(cloneCache)
 
 Order of definition
 
-```typescript src
-function isObject(value: unknown): value is object {
-  return value !== null && typeof value === 'object';
-}
-
-function cloneObject(value: object): object {
-  if (Array.isArray(value)) return value.slice(0);
-  return Object.assign({}, value);
-}
-
-const frozen = Symbol('frozen');
-```
-
 ```typescript test
 it('Copy is configurable', () => {
   let frozen = Object.freeze([1234]);
@@ -121,31 +171,6 @@ it('Copy is configurable', () => {
 ```
 
 TODO
-
-```typescript src
-function freeze(value: unknown) {
-  const stopIterate = new Set<object>();
-  const cloneCache = new Map();
-  const result = cloneFreeze(value);
-  cloneCache.forEach(c => ((c[frozen] = true), Object.freeze(c)));
-  return result;
-
-  function iterate(v: object, copy: object) {
-    if (stopIterate.has(v)) return copy;
-    stopIterate.add(v);
-    for (var p in v) copy[p] = cloneFreeze(v[p]);
-    return copy;
-  }
-
-  function cloneFreeze(v: unknown) {
-    if (v && v[frozen]) return v;
-    if (v instanceof Date) return v.toISOString();
-    if (!isObject(v)) return Object.freeze(v);
-    if (!cloneCache.has(v)) cloneCache.set(v, cloneObject(v));
-    return iterate(v, cloneCache.get(v));
-  }
-}
-```
 
 ```typescript test
 let f = function () {};
