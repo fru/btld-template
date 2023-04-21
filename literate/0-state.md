@@ -14,7 +14,7 @@ library.
 
 Other frameworks have their own approaches. For example, React uses a virtual
 DOM and compares two versions to detect changes. Angular 2 re-evaluates
-expressions used in components and improves performence with VM inline caching.
+expressions used in components and improves performance with VM inline caching.
 Vue 2 uses a reactive system that watches the properties accessed during
 rendering using getters and setters provided by Object.defineProperty().
 
@@ -27,7 +27,7 @@ also employed which can lead to inconsistent equality comparisons.
 
 ## A: Freezing
 
-Our approuch reliese on freezing the data first and then unfreezing it for the
+Our approach relies on freezing the data first and then unfreezing it for the
 update proxy, just to freeze again after the changes are done.
 
 ```typescript
@@ -41,6 +41,8 @@ function cloneObject(value: object): object {
 }
 ```
 
+
+
 We set the symbol `frozen` to true on any frozen object. This indicates that the
 whole subtree is frozen. Testing for `Object.isFrozen()` only checks the shallow
 object.
@@ -48,15 +50,76 @@ object.
 ```typescript
 const frozen = Symbol('frozen');
 
-function cloneAny(v: unknown, cloneCache: Map<object, object>) {
+function freezeCache(changedObjectCache: Map<object, object>) {
+  changedObjectCache.forEach(changed => {
+    changed[frozen] = true;
+    Object.freeze(changed);
+  }
+}
+```
+
+
+
+
+```typescript
+const unchanged = Symbol('unchanged');
+
+
+```
+
+
+
+
+Recursively clones all changed objects
+
+```typescript
+/**
+ * Stops if: value is already frozen
+ * Stops if: value and all deep children have unchanged marker set
+ * Stops if: changedObjectCache contains value
+ * @return {false | unknown} false if unchanged, otherwise clone
+ */
+function cloneChanged(value: unknown, changedObjectCache: Map<object, object>) {
+  if (value && value[frozen]) return false;
+  if (!isObject(value)) return false;
+  if (!changedObjectCache.has(value)) {
+    let unchanged = value[unchanged];
+    let cloned = cloneObject(value);
+
+    for (var prop in value) {
+      let changed = cloneChanged(value, changedObjectCache);
+      if (changed) {
+        unchanged = false;
+        cloned[prop] = changed;
+      }
+    }
+
+    if (unchanged) return false;
+    changedObjectCache.set(value, cloned);
+  }
+  return changedObjectCache.get(value);
+}
+```
+
+
+
+
+```typescript
+function cloneUnknown(v: unknown, cloneCache: Map<object, object>) {
   if (v && v[frozen]) return v;
   if (v instanceof Date) return v.toISOString();
   if (!isObject(v)) return Object.freeze(v); // Functions are frozen
   if (!cloneCache.has(v)) cloneCache.set(v, cloneObject(v));
-
   return cloneCache.get(v);
 }
 ```
+
+// TODO check if there are changes or if we can use the old frozen object again:
+
+1. We need the old frozen object
+
+- We need the key count of the old object
+- Alternatively we need a flag that indicates that there are no changes
 
 Now the actual implementation has to make sure that recursive data does not lead
 to an infinite loop. Every object that is encountered is added to `stopIterate`.
@@ -86,8 +149,6 @@ function freeze(value: unknown) {
 }
 ```
 
-##
-
 ## Interface
 
 We introduce the `State` class which is used to freeze initial data.
@@ -101,7 +162,7 @@ data.set(d => d.tasks.push('New Task'));
 data.set('tasks', d => d.push('New Task'));
 data.set('tasks', ['New Task']);
 
-let listener = data.listener(action, index, formaters);
+let listener = data.listener(action, index, formatters);
 listener.watch('/tasks');
 listener.watch('/tasks/:index');
 ```
@@ -137,23 +198,23 @@ updates they also produce the same proxy
 
 NOW REFREEZING:
 
-In order to refreeze every non froozen object has to be copied But again another
+In order to refreeze every non frozen object has to be copied But again another
 cache is used: in unfrozen -> out unfrozen
 
 After copy freeze all objects in cloneCache
 
-In order to reduce copying whem an object is placed in proxyCache Place the
-clone that is proxyied directly in cloneCache[proxy] = underlying;
+In order to reduce copying when an object is placed in proxyCache Place the
+clone that is proxies directly in cloneCache[proxy] = underlying;
 
-Even during update "functions" are still froozen The original "functions" are
+Even during update "functions" are still frozen The original "functions" are
 frozen - they are not copied.
 
-Iterate to freeze: - function: Object.freeze - else is primitve: return
+Iterate to freeze: - function: Object.freeze - else is primitive: return
 original - is in cloneCache return cloneCache - let clone = cloneShallow(object,
-cloneCache) - continue freeze iteration if not allready in hasIterated - return
+cloneCache) - continue freeze iteration if not already in hasIterated - return
 clone
 
-Iterate cloneCache: Object.freeze + set [[frozen]] until allready [[frozen]]
+Iterate cloneCache: Object.freeze + set [[frozen]] until already [[frozen]]
 
 State.update running = true local: cloneCache, proxyCache //
 createWritableProxy(frozen, cloneCache, proxyCache) freeze(cloneCache,
@@ -258,6 +319,6 @@ it('Updates should be possible', () => {
 });
 
 // Array operations should work the same
-// All should be froozen
+// All should be frozen
 // Listener is called
 ```
