@@ -88,7 +88,46 @@ function createProxy(frozen: object, proxies: ObjectCache) {
 }
 ```
 
-Now its time to recursively clone all objects that that are not fully marked as
+We set the unchanged marker on set and delete only on the direct parent. In
+order to refreeze the changes we need to normalize the unchanged marker. This
+means that every parent of an object with [unchanged] === false is also set to
+false.
+
+```typescript
+function normalizeUnchangedMarker(root: object) {
+  // One object can have many parents
+  const parentMap = new Map<object, object[]>();
+  const changedDirectly = new Set();
+  const stopIterating = new Set();
+
+  (function fillData(val: unknown) {
+    if (val && !val[unchanged]) changedDirectly.add(val);
+    stopIterating.add(val);
+
+    for (var prop in val) {
+      let propVal = val[prop];
+      if (!isUnfrozenObject(propVal)) continue;
+      // Fill parent map
+      if (!parentMap.has(propVal)) parentMap.set(propVal, []);
+      parentMap.get(propVal).push(val);
+      // Recurse
+      if (!stopIterating.has(propVal)) fillData(propVal);
+    }
+  })(root);
+
+  function normalizeIterateParents(changed: object) {
+    let parents = parentMap.get(changed) || [];
+    for (let parent of parents) {
+      if (!parent[unchanged]) continue;
+      parent[unchanged] = false;
+      normalizeIterateParents(parent);
+    }
+  }
+  changedDirectly.forEach(normalizeIterateParents);
+}
+```
+
+Now its time to recursively clone all objects that are not fully marked as
 unchanged. This is used when freezing an object tree.
 
 Recurse with the following stop conditions:
@@ -100,18 +139,37 @@ Recurse with the following stop conditions:
 ```typescript
 const frozen = Symbol('frozen');
 
-function isUnfrozenObject(value: unknown) {
-  return isObject(value) && !value[frozen];
+function isUnfrozenObject(val: unknown) {
+  return isObject(val) && !val[frozen];
 }
 
-function freeze(val: object) {
-  let change = findChangeAndClone();
-  change.forEach(obj => {
+function freeze(root: object) {
+  normalizeUnchangedMarker(root);
+  const cloneCache = new Map();
+  const result = cloneChanged(root, cloneCache);
+
+  cloneCache.forEach(obj => {
     obj[frozen] = true;
     Object.freeze(obj);
   });
+  return result;
+}
 
-  return change.get(val) || val;
+function cloneChanged(val: unknown, cloneCache: ObjectCache) {
+  // Simple Cases - No cloning needed
+  if (typeof val === 'function') return Object.freeze(val);
+  if (!isUnfrozenObject(val)) return val;
+  if (val[unchanged]) return val[unchanged];
+  if (val instanceof Date) return val.toISOString();
+  if (cloneCache.has(val)) return cloneCache.get(val);
+
+  // Clone and recurse
+  const cloned = shallowCloneObject(val);
+  cloneCache.set(val, cloned);
+  for (var prop in cloned) {
+    cloned[prop] = cloneChanged(cloned[prop], cloneCache);
+  }
+  return cloned;
 }
 ```
 
@@ -121,26 +179,33 @@ ObjectCache phases
 2. undefined - has changes (delete unchanged)
 3. value - cloned (also stop recursion)
 
+Algorithm
+
+Normalize Unchanged Mark: void
+
+1. Find directly changed, and map parent child connection.
+2. For every changed traverse connection and mark as changed until
+   unchanged=false or no more parent
+
+Clone and freeze
+
+3.
+
 ```typescript
-function findChangeAndClone(root: object): ObjectCache {
-  let changeStopRecursion = new Set();
-  let change = new Set();
+function findChange(root: object): Set<object> {
+  let encountered = new Set(); // Stops recursion
+  let result = new Set();
 
-  function findChange(val: unknown) {
-    if (changeStopRecursion.has(val)) return;
-    changeStopRecursion.add(val);
+  function iterateHasChanges(val: unknown) {
+    if (isUnfrozenObject(val) || encountered.has(val)) return false;
+    let unchanged = value[unchanged];
+    for (var prop in val) {
+      populateChanged(val[prop], changed);
+      if (changed.has(val[prop])) unchanged = false;
+    }
   }
-
-  let cloned = new Map();
-
-  function makeCloned(val: unknown) {
-    if (cloned.has(val)) return;
-  }
-
-  findChange(root);
-  makeCloned(root);
-
-  return cloned;
+  iterateHasChanges(root);
+  return result;
 }
 ```
 
