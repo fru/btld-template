@@ -100,21 +100,47 @@ Recurse with the following stop conditions:
 ```typescript
 const frozen = Symbol('frozen');
 
-function deepFreezeNeeded(value: unknown) {
+function isUnfrozenObject(value: unknown) {
   return isObject(value) && !value[frozen];
 }
 
-function freeze(val: unknown) {
-  let changed: ObjectCache = new Map();
-  populateChanged(val, changed);
-  cloneChanged(val, changed);
-
-  changed.forEach(obj => {
+function freeze(val: object) {
+  let change = findChangeAndClone();
+  change.forEach(obj => {
     obj[frozen] = true;
     Object.freeze(obj);
   });
 
-  return changed.get(val) || val;
+  return change.get(val) || val;
+}
+```
+
+ObjectCache phases
+
+1. undefined - add every found (stop recursion)
+2. undefined - has changes (delete unchanged)
+3. value - cloned (also stop recursion)
+
+```typescript
+function findChangeAndClone(root: object): ObjectCache {
+  let changeStopRecursion = new Set();
+  let change = new Set();
+
+  function findChange(val: unknown) {
+    if (changeStopRecursion.has(val)) return;
+    changeStopRecursion.add(val);
+  }
+
+  let cloned = new Map();
+
+  function makeCloned(val: unknown) {
+    if (cloned.has(val)) return;
+  }
+
+  findChange(root);
+  makeCloned(root);
+
+  return cloned;
 }
 ```
 
@@ -152,13 +178,11 @@ function cloneChanged(val: unknown, changed: ObjectCache): unknown {
 
 ```typescript
 export class State {
-  listener?: (update: object) => void;
   constructor(private _frozen: object) {
     this._frozen = freeze(_frozen);
   }
-  get() {
-    return this._frozen;
-  }
+  get = () => this._frozen;
+
   update(action: (data: object) => void): void {
     const updateRoot = createProxyCached(data);
     action(updateRoot);
@@ -166,6 +190,8 @@ export class State {
     if (this.listener) this.listener(refrozen);
     this._frozen = refrozen;
   }
+
+  listener?: (update: object) => void;
 }
 ```
 
