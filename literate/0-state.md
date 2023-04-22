@@ -79,9 +79,10 @@ function createProxy(frozen: object, proxies: ObjectCache) {
 
     // Read trap:
     get: function (target, p) {
-      if (!isObject(target[p]) || target[p] !== frozen[p]) {
-        return target[prop]; // This keeps functions frozen
-      }
+      if (p === unchanged) return target[prop];
+      if (target[p] !== frozen[p]) return target[prop];
+      // Functions are still returned frozen
+      if (!isObject(target[p])) return target[prop];
       return createProxyCached(frozen[prop], proxies);
     },
   });
@@ -95,28 +96,28 @@ false.
 
 ```typescript
 function normalizeUnchangedMarker(root: object) {
-  // One object can have many parents
-  const parentMap = new Map<object, object[]>();
   const changedDirectly = new Set();
   const stopIterating = new Set();
+  // One object can have many parents
+  const childToParents = new Map<object, object[]>();
 
-  (function fillData(val: unknown) {
+  (function fillMappings(val: unknown) {
     if (val && !val[unchanged]) changedDirectly.add(val);
     stopIterating.add(val);
 
-    for (var prop in val) {
-      let propVal = val[prop];
-      if (!isUnfrozenObject(propVal)) continue;
+    for (var p in val) {
+      let child = val[p];
+      if (!isUnfrozenObject(child)) continue;
       // Fill parent map
-      if (!parentMap.has(propVal)) parentMap.set(propVal, []);
-      parentMap.get(propVal).push(val);
+      if (!childToParents.has(child)) childToParents.set(child, []);
+      childToParents.get(child).push(val);
       // Recurse
-      if (!stopIterating.has(propVal)) fillData(propVal);
+      if (!stopIterating.has(child)) fillMappings(child);
     }
   })(root);
 
   function normalizeIterateParents(changed: object) {
-    let parents = parentMap.get(changed) || [];
+    let parents = childToParents.get(changed) || [];
     for (let parent of parents) {
       if (!parent[unchanged]) continue;
       parent[unchanged] = false;
@@ -173,76 +174,10 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 }
 ```
 
-ObjectCache phases
-
-1. undefined - add every found (stop recursion)
-2. undefined - has changes (delete unchanged)
-3. value - cloned (also stop recursion)
-
-Algorithm
-
-Normalize Unchanged Mark: void
-
-1. Find directly changed, and map parent child connection.
-2. For every changed traverse connection and mark as changed until
-   unchanged=false or no more parent
-
-Clone and freeze
-
-3.
+Now the first simple interface
 
 ```typescript
-function findChange(root: object): Set<object> {
-  let encountered = new Set(); // Stops recursion
-  let result = new Set();
-
-  function iterateHasChanges(val: unknown) {
-    if (isUnfrozenObject(val) || encountered.has(val)) return false;
-    let unchanged = value[unchanged];
-    for (var prop in val) {
-      populateChanged(val[prop], changed);
-      if (changed.has(val[prop])) unchanged = false;
-    }
-  }
-  iterateHasChanges(root);
-  return result;
-}
-```
-
-```typescript
-function populateChanged(val: unknown, changed: ObjectCache): void {
-  if (!deepFreezeNeeded(val)) return;
-  if (changed.has(val)) return;
-  changed.set(val, undefined);
-
-  let unchanged = value[unchanged];
-  for (var prop in val) {
-    populateChanged(val[prop], changed);
-    if (changed.has(val[prop])) unchanged = false;
-  }
-  if (unchanged) changed.delete(val);
-}
-```
-
-```typescript
-function cloneChanged(val: unknown, changed: ObjectCache): unknown {
-  if (val instanceof Date) return val.toISOString();
-  if (typeof val === 'function') return Object.freeze(val); // Freeze functions
-  if (!deepFreezeNeeded(val)) return val;
-  if (!changed.has(val)) return val[unchanged];
-  if (!changed.get(val)) {
-    let cloned = shallowCloneObject(val);
-    changed.set(val, cloned);
-    for (var prop in cloned) {
-      cloned[prop] = cloneChanged(cloned[prop], changed);
-    }
-  }
-  return changed.get(val);
-}
-```
-
-```typescript
-export class State {
+export class SimpleState {
   constructor(private _frozen: object) {
     this._frozen = freeze(_frozen);
   }
