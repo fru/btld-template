@@ -34,13 +34,7 @@ We set the symbol `[[frozen]]` to true on any frozen object. This indicates that
 the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
 shallow object.
 
-Another symbol `[[unchanged]]` is used to mark if a shallow object has been
-modified trough the update proxy using the traps `set` and `deleteProperty`
-
 ```typescript
-type ObjectCache = Map<object, object>;
-const unchanged = Symbol('unchanged');
-
 function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
@@ -50,6 +44,8 @@ function shallowCloneObject(value: object): object {
   return Object.assign({}, value);
 }
 
+type ObjectCache = Map<object, object>;
+
 function createProxyCached(frozen: object, proxies: ObjectCache) {
   if (!proxies.has(frozen)) {
     proxies.set(frozen, createProxy(frozen, proxies));
@@ -58,7 +54,12 @@ function createProxyCached(frozen: object, proxies: ObjectCache) {
 }
 ```
 
+Another symbol `[[unchanged]]` is used to mark if a shallow object has been
+modified trough the update proxy using the traps `set` and `deleteProperty`
+
 ```typescript
+const unchanged = Symbol('unchanged');
+
 function createProxy(frozen: object, proxies: ObjectCache) {
   let clone = shallowCloneObject(frozen);
   clone[unchanged] = frozen;
@@ -111,7 +112,9 @@ function freeze(val: unknown) {
   changed.forEach(obj => {
     obj[frozen] = true;
     Object.freeze(obj);
-  }
+  });
+
+  return changed.get(val) || val;
 }
 ```
 
@@ -148,39 +151,23 @@ function cloneChanged(val: unknown, changed: ObjectCache): unknown {
 ```
 
 ```typescript
-type Action = (data: object) => void;
-function updateFrozen(beforeFrozen: unknown, action: Action) {
-  const proxyCache = new Map();
-  const changedCache = new Map();
-
-  function createUpdateProxy(frozen: object) {
-    if (!proxyCache.has(frozen)) {
-      let clone = shallowUnfreezeObject(frozen);
-      let proxy = new Proxy(clone, {
-        ...proxyWriteTraps,
-        get: function (target, p) {
-          if (target[p] === frozen[p] && isObject(frozen[p])) {
-            return createUpdateProxy();
-          }
-          return target[prop];
-        },
-      });
-      proxyCache.set(frozen, proxy);
-    }
-    return proxyCache.get(frozen);
+export class State {
+  listener?: (update: object) => void;
+  constructor(private _frozen: object) {
+    this._frozen = freeze(_frozen);
+  }
+  get() {
+    return this._frozen;
+  }
+  update(action: (data: object) => void): void {
+    const updateRoot = createProxyCached(data);
+    action(updateRoot);
+    let refrozen = freeze(updateRoot);
+    if (this.listener) this.listener(refrozen);
+    this._frozen = refrozen;
   }
 }
 ```
-
-function createUpdateProxy(frozen: object): object { if
-(!proxyCache.has(frozen)) { let clone = cloneObject(frozen); let proxy = new
-Proxy(clone, { setPrototypeOf: () => false, get: (o, prop) =>
-getIterator(o[prop], frozen[prop]), set: (o, prop, value) => ((o[prop] = value),
-true), }); proxyCache.set(frozen, proxy); } let res = proxyCache.get(frozen);
-return res; }
-
-function getIterator(value: any, frozen: any) { if (value !== frozen ||
-!isObject(frozen)) return value; return createUpdateProxy(frozen); }
 
 // TODO check if there are changes or if we can use the old frozen object again:
 
