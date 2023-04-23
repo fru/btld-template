@@ -50,7 +50,7 @@ function createProxyCached(frozen: object, proxies: ObjectCache) {
   if (!proxies.has(frozen)) {
     proxies.set(frozen, createProxy(frozen, proxies));
   }
-  return proxies.get(frozen);
+  return proxies.get(frozen)!;
 }
 ```
 
@@ -70,20 +70,22 @@ function createProxy(frozen: object, proxies: ObjectCache) {
     // Write traps:
     set: function (target) {
       target[unchanged] = false;
+      // @ts-ignore: next-line
       return Reflect.set(...arguments);
     },
     deleteProperty: function (target) {
       target[unchanged] = false;
+      // @ts-ignore: next-line
       return Reflect.deleteProperty(...arguments);
     },
 
     // Read trap:
     get: function (target, p) {
-      if (p === unchanged) return target[prop];
-      if (target[p] !== frozen[p]) return target[prop];
+      if (p === unchanged) return target[p];
+      if (target[p] !== frozen[p]) return target[p];
       // Functions are still returned frozen
-      if (!isObject(target[p])) return target[prop];
-      return createProxyCached(frozen[prop], proxies);
+      if (!isObject(target[p])) return target[p];
+      return createProxyCached(frozen[p], proxies);
     },
   });
 }
@@ -96,12 +98,12 @@ false.
 
 ```typescript
 function normalizeUnchangedMarker(root: object) {
-  const changedDirectly = new Set();
+  const changedDirectly = new Set<object>();
   const stopIterating = new Set();
   // One object can have many parents
   const childToParents = new Map<object, object[]>();
 
-  (function fillMappings(val: unknown) {
+  (function fillMappings(val: object) {
     if (val && !val[unchanged]) changedDirectly.add(val);
     stopIterating.add(val);
 
@@ -110,7 +112,7 @@ function normalizeUnchangedMarker(root: object) {
       if (!isUnfrozenObject(child)) continue;
       // Fill parent map
       if (!childToParents.has(child)) childToParents.set(child, []);
-      childToParents.get(child).push(val);
+      childToParents.get(child)!.push(val);
       // Recurse
       if (!stopIterating.has(child)) fillMappings(child);
     }
@@ -140,7 +142,7 @@ Recurse with the following stop conditions:
 ```typescript
 const frozen = Symbol('frozen');
 
-function isUnfrozenObject(val: unknown) {
+function isUnfrozenObject(val: unknown): val is object {
   return isObject(val) && !val[frozen];
 }
 
@@ -183,7 +185,7 @@ abstract class MinimalState {
   _frozen = freeze({});
   getRoot = () => this._frozen;
   updateRoot(action: UpdateAction): void {
-    const root = createProxyCached(this._frozen);
+    const root = createProxyCached(this._frozen, new Map());
     action(root);
     this._frozen = freeze(root);
     if (this.listener) this.listener();
@@ -218,11 +220,11 @@ export class State extends MinimalState {
     this._watchers.push({ get, cb: callback, prev: get(this._frozen) });
   }
   listener(): void {
-    let invoke = new Set();
+    let invoke = new Set<Function>();
     for (let { get, cb, prev } of this._watchers) {
       if (prev !== get(this._frozen)) invoke.add(cb);
     }
-    invoke.forEach(invokeAndLogError);
+    invoke.forEach(f => invokeAndLogError(f));
   }
 }
 
@@ -244,7 +246,7 @@ function parsePath(path: string) {
       // TODO
       return undefined;
     },
-    create: function (o: unknown, value: unknown) {
+    create: function (o: unknown) {
       // TODO
       return { writable: {}, prop: 2 };
     },

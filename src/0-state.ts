@@ -15,7 +15,7 @@ function createProxyCached(frozen: object, proxies: ObjectCache) {
   if (!proxies.has(frozen)) {
     proxies.set(frozen, createProxy(frozen, proxies));
   }
-  return proxies.get(frozen);
+  return proxies.get(frozen)!;
 }
 const unchanged = Symbol('unchanged');
 
@@ -77,11 +77,11 @@ function normalizeUnchangedMarker(root: object) {
       normalizeIterateParents(parent);
     }
   }
-  changedDirectly.forEach(c => normalizeIterateParents(c));
+  changedDirectly.forEach(normalizeIterateParents);
 }
 const frozen = Symbol('frozen');
 
-function isUnfrozenObject(val: unknown) {
+function isUnfrozenObject(val: unknown): val is object {
   return isObject(val) && !val[frozen];
 }
 
@@ -119,7 +119,7 @@ abstract class MinimalState {
   _frozen = freeze({});
   getRoot = () => this._frozen;
   updateRoot(action: UpdateAction): void {
-    const root = createProxyCached(this._frozen);
+    const root = createProxyCached(this._frozen, new Map());
     action(root);
     this._frozen = freeze(root);
     if (this.listener) this.listener();
@@ -149,11 +149,11 @@ export class State extends MinimalState {
     this._watchers.push({ get, cb: callback, prev: get(this._frozen) });
   }
   listener(): void {
-    let invoke = new Set();
+    let invoke = new Set<Function>();
     for (let { get, cb, prev } of this._watchers) {
       if (prev !== get(this._frozen)) invoke.add(cb);
     }
-    invoke.forEach(invokeAndLogError);
+    invoke.forEach(f => invokeAndLogError(f));
   }
 }
 
@@ -172,7 +172,7 @@ function parsePath(path: string) {
       // TODO
       return undefined;
     },
-    create: function (o: unknown, value: unknown) {
+    create: function (o: unknown) {
       // TODO
       return { writable: {}, prop: 2 };
     },
