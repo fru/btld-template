@@ -21,6 +21,7 @@ function createProxyCached(frozen: object, proxies: ObjectCache) {
   }
   return proxies.get(frozen)!;
 }
+
 const unchanged = Symbol('unchanged');
 
 function createProxy(frozen: object, proxies: ObjectCache) {
@@ -52,6 +53,7 @@ function createProxy(frozen: object, proxies: ObjectCache) {
     },
   });
 }
+
 function normalizeUnchangedMarker(root: object) {
   const changedDirectly = new Set<object>();
   const stopIterating = new Set();
@@ -83,6 +85,7 @@ function normalizeUnchangedMarker(root: object) {
   }
   changedDirectly.forEach(normalizeIterateParents);
 }
+
 const frozen = Symbol('frozen');
 
 function isUnfrozenObject(val: unknown): val is object {
@@ -117,6 +120,7 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
   }
   return cloned;
 }
+
 type UpdateAction = (data: object) => void;
 
 abstract class MinimalState {
@@ -130,6 +134,7 @@ abstract class MinimalState {
   }
   abstract listener(): void;
 }
+
 export class State extends MinimalState {
   get(path: string) {
     return parsePath(path).get(this._frozen);
@@ -168,6 +173,7 @@ function invokeAndLogError(callback: Function) {
     console.error(e);
   }
 }
+
 type PathGetter = (o: unknown) => unknown;
 
 function parsePath(path: string) {

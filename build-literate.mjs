@@ -35,7 +35,7 @@ function extract(text, languages = ['typescript']) {
   let regex = new RegExp('```' + language + '([\\s\\S]+?)```', 'g');
   let code = [...text.matchAll(regex)].map(m => m[2].trim());
 
-  return code.join('\n');
+  return code.join('\n\n');
 }
 
 function header(relative) {
