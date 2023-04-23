@@ -174,13 +174,13 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 }
 ```
 
-Now the first simple interface
+TODO the most minimal interface
 
 ```typescript
 abstract class MinimalState {
   _frozen = freeze({});
-  frozen = () => this._frozen;
-  updateRoot(action: (data: object) => void): void {
+  getRoot = () => this._frozen;
+  updateRoot(action: (data: object) => object): void {
     const root = createProxyCached(this._frozen);
     action(root);
     this._frozen = freeze(root);
@@ -195,9 +195,9 @@ TODO More user friendly interface
 ```typescript
 export class State extends MinimalState {
   get(path: string) {
-    return parsePath(path).get(this.frozen());
+    return parsePath(path).get(this._frozen);
   }
-  update(path: string, action: (data: object) => void): void {
+  update(path: string, action: (data: object) => object): void {
     const { create } = parsePath(path);
     this.updateRoot(data => action(create(data)));
   }
@@ -208,20 +208,36 @@ export class State extends MinimalState {
   _watchers: { get: PathGetter; cb: Function; prev: unknown }[] = [];
   watch(path: string, callback: Function) {
     const { get } = parsePath(path);
-    this._watchers.push({ get, cb: callback, prev: get(this.frozen()) });
+    this._watchers.push({ get, cb: callback, prev: get(this._frozen) });
   }
   listener(): void {
     let invoke = new Set();
     for (let { get, cb, prev } of this._watchers) {
-      if (prev !== get(this.frozen())) invoke.add(cb);
+      if (prev !== get(this._frozen)) invoke.add(cb);
     }
-    let firstError;
-    invoke.forEach(f => try f() catch(e) {
-      if (firstError) console.error(e) else firstError = e;
-    });
-    if (firstError) throw firstError;
+    invoke.forEach(invokeAndLogError);
+  }
+}
+
+function invokeAndLogError(callback: Function) {
+  try {
+    callback();
+  } catch (e) {
+    console.error(e);
   }
 }
 ```
 
-s TODO How can we make paths more performant?
+```typescript
+function parsePath(path: string) {
+  return {
+    get: function (o: unknown) {
+      // TODO
+    },
+    create: function (o: unknown, value: unknown) {
+      // TODO
+    },
+    parent: function (o: unknown)
+  };
+}
+```
