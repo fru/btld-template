@@ -177,32 +177,51 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 Now the first simple interface
 
 ```typescript
-export class SimpleState {
-  constructor(private _frozen: object) {
-    this._frozen = freeze(_frozen);
+abstract class MinimalState {
+  _frozen = freeze({});
+  frozen = () => this._frozen;
+  updateRoot(action: (data: object) => void): void {
+    const root = createProxyCached(this._frozen);
+    action(root);
+    this._frozen = freeze(root);
+    if (this.listener) this.listener();
   }
-  get = () => this._frozen;
-
-  update(action: (data: object) => void): void {
-    const updateRoot = createProxyCached(data);
-    action(updateRoot);
-    let refrozen = freeze(updateRoot);
-    if (this.listener) this.listener(refrozen);
-    this._frozen = refrozen;
-  }
-
-  listener?: (update: object) => void;
+  abstract listener(): void;
 }
 ```
 
 TODO More user friendly interface
 
 ```typescript
-export class State {
-  get(path?) {}
-  set(path, action) {}
-  watch(path, callback) {}
+export class State extends MinimalState {
+  get(path: string) {
+    return parsePath(path).get(this.frozen());
+  }
+  update(path: string, action: (data: object) => void): void {
+    const { create } = parsePath(path);
+    this.updateRoot(data => action(create(data)));
+  }
+  set(path: string, value: unknown) {
+    const { create } = parsePath(path);
+    this.updateRoot(data => create(data, value));
+  }
+  _watchers: { get: PathGetter; cb: Function; prev: unknown }[] = [];
+  watch(path: string, callback: Function) {
+    const { get } = parsePath(path);
+    this._watchers.push({ get, cb: callback, prev: get(this.frozen()) });
+  }
+  listener(): void {
+    let invoke = new Set();
+    for (let { get, cb, prev } of this._watchers) {
+      if (prev !== get(this.frozen())) invoke.add(cb);
+    }
+    let firstError;
+    invoke.forEach(f => try f() catch(e) {
+      if (firstError) console.error(e) else firstError = e;
+    });
+    if (firstError) throw firstError;
+  }
 }
 ```
 
-TODO How can we make paths more performant?
+s TODO How can we make paths more performant?
