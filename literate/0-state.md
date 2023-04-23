@@ -177,10 +177,12 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 TODO the most minimal interface
 
 ```typescript
+type UpdateAction = (data: object) => void;
+
 abstract class MinimalState {
   _frozen = freeze({});
   getRoot = () => this._frozen;
-  updateRoot(action: (data: object) => object): void {
+  updateRoot(action: UpdateAction): void {
     const root = createProxyCached(this._frozen);
     action(root);
     this._frozen = freeze(root);
@@ -197,13 +199,18 @@ export class State extends MinimalState {
   get(path: string) {
     return parsePath(path).get(this._frozen);
   }
-  update(path: string, action: (data: object) => object): void {
-    const { create } = parsePath(path);
-    this.updateRoot(data => action(create(data)));
-  }
   set(path: string, value: unknown) {
-    const { create } = parsePath(path);
-    this.updateRoot(data => create(data, value));
+    this.updateRoot(data => {
+      const { writable, prop } = parsePath(path).create(data);
+      writable[prop] = value;
+    });
+  }
+  update(path: string, action: UpdateAction): void {
+    this.updateRoot(data => {
+      const { writable, prop } = parsePath(path).create(data);
+      if (!writable[prop]) writable[prop] = {};
+      action(writable[prop]);
+    });
   }
   _watchers: { get: PathGetter; cb: Function; prev: unknown }[] = [];
   watch(path: string, callback: Function) {
@@ -229,15 +236,18 @@ function invokeAndLogError(callback: Function) {
 ```
 
 ```typescript
+type PathGetter = (o: unknown) => unknown;
+
 function parsePath(path: string) {
   return {
-    get: function (o: unknown) {
+    get: function (o: unknown): unknown {
       // TODO
+      return undefined;
     },
     create: function (o: unknown, value: unknown) {
       // TODO
+      return { writable: {}, prop: 2 };
     },
-    parent: function (o: unknown)
   };
 }
 ```
