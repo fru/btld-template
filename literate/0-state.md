@@ -179,18 +179,59 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 TODO the most minimal interface
 
 ```typescript
-type UpdateAction = (data: object) => void;
+class State {
+  __frozen = freeze({});
+  contexts = [] as Context[];
 
-abstract class MinimalState {
-  _frozen = freeze({});
-  getRoot = () => this._frozen;
-  updateRoot(action: UpdateAction): void {
-    const root = createProxyCached(this._frozen, new Map());
+  frozen = () => this.__frozen;
+
+  update(action: (data: object) => void): void {
+    const root = createProxyCached(this.__frozen, new Map());
     action(root);
-    this._frozen = freeze(root);
-    if (this.listener) this.listener();
+    this.__frozen = freeze(root);
+    this.contexts.forEach(c => c.onStateChange());
   }
-  abstract listener(): void;
+}
+```
+
+// Paths, Caching & Watchers need an additional argument: context
+
+// Every Component has one: State
+
+// Every template instance has one: Context
+
+```typescript
+class Context {
+  __args = [];
+  // Cache parent -> prop -> cached
+
+  constructor(private __state: State) {}
+
+  setArguments(args: object[]) {
+    this.__args = args;
+    this.onStateChange();
+  }
+
+  onStateChange() {
+    // TODO clear function results
+    // TODO run watchers
+  }
+
+  // cache function results
+
+  get(path: string) {}
+
+  watch(path: string, actions: Function) {}
+
+  // build path object
+}
+
+class Path {
+  constructor(path: string) {
+    // parse
+  }
+
+  get(data: object, context: Context) {}
 }
 ```
 
