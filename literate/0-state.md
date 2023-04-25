@@ -179,10 +179,10 @@ export function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 TODO the most minimal interface.
 
 ```typescript
-export abstract class SimpleState {
+export abstract class StateMinimal {
   __frozen = freeze({});
-  rootFrozen = () => this.__frozen;
 
+  rootProp = (prop: string) => this.__frozen[prop];
   rootUpdate(action: (data: object) => void): void {
     const root = createProxyCached(this.__frozen, new Map());
     action(root);
@@ -190,6 +190,41 @@ export abstract class SimpleState {
     this.onChange();
   }
   abstract onChange(): void;
+}
+```
+
+Layer that manages computable's
+
+```typescript
+export type Computable = (state: State) => unknown;
+export type ComputableObj = { [prop: string]: Computable };
+
+export function deriveComputable(state: State, comp: ComputableObj): State {
+  let derived = Object.create(state);
+  let isRunning = false; // Stops infinite recursion issues
+
+  let cacheFrozen = null;
+  let cacheComputed = new Map<string, unknown>();
+
+  derived.rootProp = function (prop: string) {
+    if (!comp[prop]) return state.rootProp(prop);
+    // This is enough, since rootProps aren't cached no top level cache invalidation is needed
+    if (cacheFrozen !== state.__frozen) cacheComputed.clear();
+    if (cacheComputed.has(prop)) return cacheComputed.get(prop);
+    if (isRunning) return undefined;
+    let result: unknown = undefined;
+    try {
+      isRunning = true;
+      result = comp[prop](this);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      isRunning = false;
+      cacheComputed.set(prop, result);
+    }
+    return result;
+  };
+  return derived;
 }
 ```
 
@@ -235,29 +270,20 @@ export function compileCachedGetter(props: (string | number)[]): PathGetter {
 }
 ```
 
-- ensureExists(parent: )
-
 ```typescript
-export class State extends SimpleState {
+export class State extends StateMinimal {
   __cachePaths = new Map<string, Path>();
-  __cacheComputed = new Map<string, unknown>();
-
-  __computed = new Map<string, Function>();
 
   watchers = new Set<Function>();
 
-  get(path: string) {
-    // TODO 4: How to pass computed + compCache + state to paths
-    // - Just arguments?
-    // - root(key) function that resolves the state / computable on root
-    // !!! wait __cacheComputed needs to autoclear when value of different state is passed to getter
-  }
+  get(path: string) {}
   set(path: string, value: unknown) {}
   update(path: string, action: (data: object) => void) {}
-  setComputed(root: string, computable: Function) {}
   onChange() {}
 }
 ```
+
+// TODO 5 Computed on change exception handling
 
 ## TODO's
 
@@ -270,6 +296,6 @@ Root override state:
 - Cleared on state change or by mixins
 - Can access each other with just a simple get(path);
 
-TODO 5 !!!!!!! => How to change index but keep specialized CompState with
+TODO 2 !!!!!!! => How to change index but keep specialized CompState with
 formatters Use prototype chain? ComputableState + add computable -> Child
 ComputableState changes
