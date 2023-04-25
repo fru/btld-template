@@ -181,7 +181,7 @@ TODO the most minimal interface
 ```typescript
 class State {
   __frozen = freeze({});
-  contexts = [] as Context[];
+  contexts = [] as { onChange: Function }[];
 
   frozen = () => this.__frozen;
 
@@ -189,7 +189,36 @@ class State {
     const root = createProxyCached(this.__frozen, new Map());
     action(root);
     this.__frozen = freeze(root);
-    this.contexts.forEach(c => c.onStateChange());
+    this.contexts.forEach(c => c.onChange());
   }
 }
 ```
+
+## TODO's
+
+Root override state:
+
+- item and index
+- maybe formatters
+
+- get(path)
+- writable(path) -> parent, prop
+- get updatable: if(parent[prop]) parent[prop] = prop >= 0 ? [] : {};
+
+Frozen -> Thin layer of computable's -> Render
+
+- We do NOT make sure computable's don't have side effects!
+- Only mixins provide computable's
+- Separate from state (always on root level)
+- Does not support async
+- Frozen and cached
+- Cleared on state change or by mixins
+- item and index are computable's
+- Can access each other with just a simple get(path);
+
+Make writable more consistent: get('1') on {'1': 23} is undefined, as numbers
+only work on arrays.
+
+Conversely text keys only work on objects
+
+ComputableState + add computable -> new ComputableState
