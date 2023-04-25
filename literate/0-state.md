@@ -176,7 +176,7 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 }
 ```
 
-TODO the most minimal interface
+TODO the most minimal interface.
 
 ```typescript
 class State {
