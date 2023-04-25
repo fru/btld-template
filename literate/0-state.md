@@ -248,10 +248,12 @@ export class State extends SimpleState {
   get(path: string) {
     // TODO 4: How to pass computed + compCache + state to paths
     // - Just arguments?
-    // - root(key) function that resolves the root?
+    // - root(key) function that resolves the state / computable on root
+    // !!! wait __cacheComputed needs to autoclear when value of different state is passed to getter
   }
   set(path: string, value: unknown) {}
   update(path: string, action: (data: object) => void) {}
+  setComputed(root: string, computable: Function) {}
 }
 ```
 
@@ -259,27 +261,13 @@ export class State extends SimpleState {
 
 Root override state:
 
-- item and index
-- maybe formatters
-
-- get(path)
-- writable(path) -> parent, prop
-- get updatable: if(parent[prop]) parent[prop] = prop >= 0 ? [] : {};
-
-Frozen -> Thin layer of computable's -> Render
-
-- We do NOT make sure computable's don't have side effects!
+- item, index & formatters are computed
 - Only mixins provide computable's
 - Separate from state (always on root level)
-- Does not support async
 - Frozen and cached
 - Cleared on state change or by mixins
-- item and index are computable's
 - Can access each other with just a simple get(path);
 
-Make writable more consistent: get('1') on {'1': 23} is undefined, as numbers
-only work on arrays.
-
-Conversely text keys only work on objects
-
-ComputableState + add computable -> new ComputableState
+TODO 5 !!!!!!! => How to change index but keep specialized CompState with
+formatters Use prototype chain? ComputableState + add computable -> Child
+ComputableState changes
