@@ -35,18 +35,18 @@ the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
 shallow object.
 
 ```typescript
-function isObject(value: unknown): value is object {
+export function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
-function shallowCloneObject(value: object): object {
+export function shallowCloneObject(value: object): object {
   if (Array.isArray(value)) return value.slice(0);
   return Object.assign({}, value);
 }
 
-type ObjectCache = Map<object, object>;
+export type ObjectCache = Map<object, object>;
 
-function createProxyCached(frozen: object, proxies: ObjectCache) {
+export function createProxyCached(frozen: object, proxies: ObjectCache) {
   if (!proxies.has(frozen)) {
     proxies.set(frozen, createProxy(frozen, proxies));
   }
@@ -58,9 +58,9 @@ Another symbol `[[unchanged]]` is used to mark if a shallow object has been
 modified trough the update proxy using the traps `set` and `deleteProperty`
 
 ```typescript
-const unchanged = Symbol('unchanged');
+export const unchanged = Symbol('unchanged');
 
-function createProxy(frozen: object, proxies: ObjectCache) {
+export function createProxy(frozen: object, proxies: ObjectCache) {
   let clone = shallowCloneObject(frozen);
   clone[unchanged] = frozen;
 
@@ -97,7 +97,7 @@ means that every parent of an object with [unchanged] === false is also set to
 false.
 
 ```typescript
-function normalizeUnchangedMarker(root: object) {
+export function normalizeUnchangedMarker(root: object) {
   const changedDirectly = new Set<object>();
   const stopIterating = new Set();
   // One object can have many parents
@@ -140,13 +140,13 @@ Recurse with the following stop conditions:
 - value and all deep children have unchanged marker set
 
 ```typescript
-const frozen = Symbol('frozen');
+export const frozen = Symbol('frozen');
 
-function isUnfrozenObject(val: unknown): val is object {
+export function isUnfrozenObject(val: unknown): val is object {
   return isObject(val) && !val[frozen];
 }
 
-function freeze(root: object) {
+export function freeze(root: object) {
   normalizeUnchangedMarker(root);
   const cloneCache = new Map();
   const result = cloneChanged(root, cloneCache);
@@ -158,7 +158,7 @@ function freeze(root: object) {
   return result;
 }
 
-function cloneChanged(val: unknown, cloneCache: ObjectCache) {
+export function cloneChanged(val: unknown, cloneCache: ObjectCache) {
   // Simple Cases - No cloning needed
   if (typeof val === 'function') return Object.freeze(val);
   if (!isUnfrozenObject(val)) return val;
@@ -179,18 +179,79 @@ function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 TODO the most minimal interface.
 
 ```typescript
-class State {
+export abstract class SimpleState {
   __frozen = freeze({});
-  contexts = [] as { onChange: Function }[];
-
   frozen = () => this.__frozen;
 
   update(action: (data: object) => void): void {
     const root = createProxyCached(this.__frozen, new Map());
     action(root);
     this.__frozen = freeze(root);
-    this.contexts.forEach(c => c.onChange());
+    this.onChange();
   }
+  abstract onChange(): void;
+}
+```
+
+Helper functions for complex state:
+
+- Parse path
+
+```typescript
+export const isArrayProp = (prop: unknown) => +prop >= 0;
+
+export function getExpectedObject(val: unknown, isArray: boolean) {
+  if (val === null || val === undefined) return num ? [] : {};
+  if (!isUnfrozenObject(val)) return false;
+  if (Array.isArray(val) !== isArray) return false;
+  return val;
+}
+
+export type Path = { get: PathGetter; write: PathWriter };
+export type PathGetter = () => unknown;
+export type PathWriter = () => {
+  parent: object;
+  prop: string | number;
+};
+
+export function parse(path: string, cache: Map<string, Path>): Path {
+  if (!cache.has(path)) {
+    // TODO 1 - actually parse
+
+    cache.set(path, {
+      get: compileCachedGetter(['test', 123]),
+      write: function write() {
+        // TODO 2 - actually write recurse
+        return { parent: {}, prop: 123 };
+      },
+    });
+  }
+  return cache.get(path)!;
+}
+
+export function compileCachedGetter(props: (string | number)[]): PathGetter {
+  // TODO 3 - actually compile
+}
+```
+
+- ensureExists(parent: )
+
+```typescript
+export class State extends SimpleState {
+  __cachePaths = new Map<string, Path>();
+  __cacheComputed = new Map<string, unknown>();
+
+  __computed = new Map<string, Function>();
+
+  watchers = new Set<Function>();
+
+  get(path: string) {
+    // TODO 4: How to pass computed + compCache + state to paths
+    // - Just arguments?
+    // - root(key) function that resolves the root?
+  }
+  set(path: string, value: unknown) {}
+  update(path: string, action: (data: object) => void) {}
 }
 ```
 
