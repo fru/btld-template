@@ -123,9 +123,9 @@ export function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 
 export abstract class SimpleState {
   __frozen = freeze({});
-  frozen = () => this.__frozen;
+  rootFrozen = () => this.__frozen;
 
-  update(action: (data: object) => void): void {
+  rootUpdate(action: (data: object) => void): void {
     const root = createProxyCached(this.__frozen, new Map());
     action(root);
     this.__frozen = freeze(root);
@@ -134,10 +134,10 @@ export abstract class SimpleState {
   abstract onChange(): void;
 }
 
-export const isArrayProp = (prop: unknown) => +prop >= 0;
+export const isArrayProp = (prop: any) => +prop >= 0;
 
 export function getExpectedObject(val: unknown, isArray: boolean) {
-  if (val === null || val === undefined) return num ? [] : {};
+  if (val === null || val === undefined) return isArray ? [] : {};
   if (!isUnfrozenObject(val)) return false;
   if (Array.isArray(val) !== isArray) return false;
   return val;
@@ -167,6 +167,7 @@ export function parse(path: string, cache: Map<string, Path>): Path {
 
 export function compileCachedGetter(props: (string | number)[]): PathGetter {
   // TODO 3 - actually compile
+  return () => undefined;
 }
 
 export class State extends SimpleState {
@@ -186,4 +187,5 @@ export class State extends SimpleState {
   set(path: string, value: unknown) {}
   update(path: string, action: (data: object) => void) {}
   setComputed(root: string, computable: Function) {}
+  onChange() {}
 }
