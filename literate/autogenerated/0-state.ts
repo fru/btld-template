@@ -92,7 +92,8 @@ export function isUnfrozenObject(val: unknown): val is object {
   return isObject(val) && !val[frozen];
 }
 
-export function freeze(root: object) {
+export function freeze(root: unknown) {
+  if (!isObject(root)) return Object.freeze(root);
   normalizeUnchangedMarker(root);
   const cloneCache = new Map();
   const result = cloneChanged(root, cloneCache);
@@ -153,7 +154,7 @@ export function deriveComputable(state: State, comp: ComputableObj): State {
     let result: unknown = undefined;
     try {
       isRunning = true;
-      result = comp[prop](this);
+      result = freeze(comp[prop](this));
     } catch (e) {
       console.error(e);
     } finally {
