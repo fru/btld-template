@@ -35,18 +35,18 @@ the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
 shallow object.
 
 ```typescript
-export function isObject(value: unknown): value is object {
+function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
-export function shallowCloneObject(value: object): object {
+function shallowCloneObject(value: object): object {
   if (Array.isArray(value)) return value.slice(0);
   return Object.assign({}, value);
 }
 
-export type ObjectCache = Map<object, object>;
+type ObjectCache = Map<object, object>;
 
-export function createProxyCached(frozen: object, proxies: ObjectCache) {
+function createProxyCached(frozen: object, proxies: ObjectCache) {
   if (!proxies.has(frozen)) {
     proxies.set(frozen, createProxy(frozen, proxies));
   }
@@ -58,9 +58,9 @@ Another symbol `[[unchanged]]` is used to mark if a shallow object has been
 modified trough the update proxy using the traps `set` and `deleteProperty`
 
 ```typescript
-export const unchanged = Symbol('unchanged');
+const unchanged = Symbol('unchanged');
 
-export function createProxy(frozen: object, proxies: ObjectCache) {
+function createProxy(frozen: object, proxies: ObjectCache) {
   let clone = shallowCloneObject(frozen);
   clone[unchanged] = frozen;
 
@@ -97,7 +97,7 @@ means that every parent of an object with [unchanged] === false is also set to
 false.
 
 ```typescript
-export function normalizeUnchangedMarker(root: object) {
+function normalizeUnchangedMarker(root: object) {
   const changedDirectly = new Set<object>();
   const stopIterating = new Set();
   // One object can have many parents
@@ -140,13 +140,13 @@ Recurse with the following stop conditions:
 - value and all deep children have unchanged marker set
 
 ```typescript
-export const frozen = Symbol('frozen');
+const frozen = Symbol('frozen');
 
-export function isUnfrozenObject(val: unknown): val is object {
+function isUnfrozenObject(val: unknown): val is object {
   return isObject(val) && !val[frozen];
 }
 
-export function freeze(root: unknown) {
+function freeze(root: unknown) {
   if (!isObject(root)) return Object.freeze(root);
   normalizeUnchangedMarker(root);
   const cloneCache = new Map();
@@ -159,7 +159,7 @@ export function freeze(root: unknown) {
   return result;
 }
 
-export function cloneChanged(val: unknown, cloneCache: ObjectCache) {
+function cloneChanged(val: unknown, cloneCache: ObjectCache) {
   // Simple Cases - No cloning needed
   if (typeof val === 'function') return Object.freeze(val);
   if (!isUnfrozenObject(val)) return val;
@@ -180,7 +180,7 @@ export function cloneChanged(val: unknown, cloneCache: ObjectCache) {
 TODO the most minimal interface.
 
 ```typescript
-export abstract class StateMinimal {
+abstract class StateMinimal {
   __frozen = freeze({});
 
   rootProp = (prop: string) => this.__frozen[prop];
@@ -191,6 +191,70 @@ export abstract class StateMinimal {
     this.onChange();
   }
   abstract onChange(): void;
+}
+```
+
+Helper functions for complex state:
+
+- Parse path
+
+```typescript
+const isArrayProp = (prop: any) => +prop >= 0;
+
+function getExpectedObject(val: unknown, isArray: boolean) {
+  if (val === null || val === undefined) return isArray ? [] : {};
+  if (!isUnfrozenObject(val)) return false;
+  if (Array.isArray(val) !== isArray) return false;
+  return val;
+}
+
+type PathSection = { p: string; ref?: true };
+type Path = { get: () => unknown; ensure: () => WriteCtx };
+type WriteCtx = { parent: object; prop: string | number };
+
+function parsePath(input: string): PathSection[] {
+  function section(p) {
+    return p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
+  }
+  return input.split('/').map(section);
+}
+
+function parse(path: string, cache: Map<string, Path>): Path {
+  if (!cache.has(path)) {
+    let sections = parsePath(path);
+    cache.set(path, {
+      get: compileCachedGetter(sections),
+      ensure: createWriteEnsurer(sections),
+    });
+  }
+  return cache.get(path)!;
+}
+
+function compileCachedGetter(path: PathSection[]) {
+  // TODO 3 - actually compile
+  return () => undefined;
+}
+
+function createWriteEnsurer(path: PathSection[], from?: WriteCtx) {
+  return () => ({ parent: {}, prop: 123 });
+}
+```
+
+The more useable state object
+
+```typescript
+export class State extends StateMinimal {
+  __pathCache = new Map<string, Path>();
+  get(path: string) {
+    let { get } = parse(path, this.__pathCache);
+    return get(this);
+  }
+  set(path: string, value: unknown) {
+    let { ensure } = parse(path, this.__pathCache);
+    let { parent, prop } = ensure(this);
+  }
+  update(path: string, action: (data: object) => void) {}
+  onChange() {}
 }
 ```
 
@@ -227,64 +291,5 @@ export function deriveComputable(state: State, comp: ComputableObj): State {
     return result;
   };
   return derived;
-}
-```
-
-Helper functions for complex state:
-
-- Parse path
-
-```typescript
-export const isArrayProp = (prop: any) => +prop >= 0;
-
-export function getExpectedObject(val: unknown, isArray: boolean) {
-  if (val === null || val === undefined) return isArray ? [] : {};
-  if (!isUnfrozenObject(val)) return false;
-  if (Array.isArray(val) !== isArray) return false;
-  return val;
-}
-
-export type PathSection = { p: string; ref?: true };
-export type Path = { get: () => unknown; write: () => WriteCtx };
-export type WriteCtx = { parent: object; prop: string | number };
-
-export function parsePath(input: string): PathSection[] {
-  return input.split('/').map(p => {
-    if (!p.startsWith(':')) return { p };
-    return { p: p.substring(1), ref: true };
-  });
-}
-
-export function parse(path: string, cache: Map<string, Path>): Path {
-  if (!cache.has(path)) {
-    let sections = parsePath(path);
-    cache.set(path, {
-      get: compileCachedGetter(sections),
-      write: compileWriter(sections),
-    });
-  }
-  return cache.get(path)!;
-}
-
-export function compileCachedGetter(path: PathSection[]) {
-  // TODO 3 - actually compile
-  return () => undefined;
-}
-
-export function compileWriter(path: PathSection[], from?: WriteCtx) {
-  return () => ({ parent: {}, prop: 123 });
-}
-```
-
-```typescript
-export class State extends StateMinimal {
-  __cachePaths = new Map<string, Path>();
-
-  watchers = new Set<Function>();
-
-  get(path: string) {}
-  set(path: string, value: unknown) {}
-  update(path: string, action: (data: object) => void) {}
-  onChange() {}
 }
 ```
