@@ -245,14 +245,10 @@ export function getExpectedObject(val: unknown, isArray: boolean) {
 }
 
 export type PathSection = { p: string, ref?: true };
-export type Path = { get: PathGetter; write: PathWriter };
-export type PathGetter = () => unknown;
-export type PathWriter = () => {
-  parent: object;
-  prop: string | number;
-};
+export type Path = { get: () => unknown; write: () => WriteCtx };
+export type WriteCtx = { parent: object, prop: string | number };
 
-function parsePath(input: string): PathSection[] {
+export function parsePath(input: string): PathSection[] {
   return input.split('/').map(p => (
     p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
   ));
@@ -263,18 +259,26 @@ export function parse(path: string, cache: Map<string, Path>): Path {
     let sections = parsePath(path);
     cache.set(path, {
       get: compileCachedGetter(sections),
-      write: function write() {
-        // TODO 2 - actually write recurse
-        return { parent: {}, prop: 123 };
-      },
+      write: compileWriter(sections),
+
     });
   }
   return cache.get(path)!;
+
+
 }
 
-export function compileCachedGetter(path: PathSection[]): PathGetter {
+export function compileCachedGetter(path: PathSection[]) {
   // TODO 3 - actually compile
   return () => undefined;
+}
+
+export function compileWriter(path: PathSection, from?: WriteCtx) {
+
+
+
+
+  return () => ({ parent: {}, prop: 123 });
 }
 
 
