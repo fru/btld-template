@@ -30,10 +30,6 @@ also employed which can lead to inconsistent equality comparisons.
 Our approach relies on freezing the data first and then unfreezing it for the
 update proxy, just to freeze again after the changes are done.
 
-We set the symbol `[[frozen]]` to true on any frozen object. This indicates that
-the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
-shallow object.
-
 ```typescript
 function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
@@ -43,14 +39,21 @@ function shallowCloneObject(value: object): object {
   if (Array.isArray(value)) return value.slice(0);
   return Object.assign({}, value);
 }
+```
 
-type ObjectCache = Map<object, object>;
+Cache
 
-function createProxyCached(frozen: object, proxies: ObjectCache) {
-  if (!proxies.has(frozen)) {
-    proxies.set(frozen, createProxy(frozen, proxies));
+```typescript
+class Cache<V> extends Map<any, V> {
+  caching(key: any, creator?: (setCache: (V) => void) => void): V {
+    if (!this.__store.has(key) && creator) {
+      // Stops infinite recursion issues
+      this.__store.set(key, undefined);
+      // Create cache entry
+      creator(c => this.__store.set(key, c));
+    }
+    return this.__store.get(key);
   }
-  return proxies.get(frozen)!;
 }
 ```
 
@@ -60,33 +63,36 @@ modified trough the update proxy using the traps `set` and `deleteProperty`
 ```typescript
 const unchanged = Symbol('unchanged');
 
-function createProxy(frozen: object, proxies: ObjectCache) {
-  let clone = shallowCloneObject(frozen);
-  clone[unchanged] = frozen;
+function createProxy(frozen: object, cache: Cache<object>) {
+  return cache.caching(frozen, setCache => {
+    const clone = shallowCloneObject(frozen);
+    clone[unchanged] = frozen;
 
-  return new Proxy(clone, {
-    setPrototypeOf: () => false, // Disallow prototype
+    const proxy = new Proxy(clone, {
+      setPrototypeOf: () => false, // Disallow prototype
 
-    // Write traps:
-    set: function (target) {
-      target[unchanged] = false;
-      // @ts-ignore: next-line
-      return Reflect.set(...arguments);
-    },
-    deleteProperty: function (target) {
-      target[unchanged] = false;
-      // @ts-ignore: next-line
-      return Reflect.deleteProperty(...arguments);
-    },
+      // Write traps:
+      set: function (target) {
+        target[unchanged] = false;
+        // @ts-ignore: next-line
+        return Reflect.set(...arguments);
+      },
+      deleteProperty: function (target) {
+        target[unchanged] = false;
+        // @ts-ignore: next-line
+        return Reflect.deleteProperty(...arguments);
+      },
 
-    // Read trap:
-    get: function (target, p) {
-      if (p === unchanged) return target[p];
-      if (target[p] !== frozen[p]) return target[p];
-      // Functions are still returned frozen
-      if (!isObject(target[p])) return target[p];
-      return createProxyCached(frozen[p], proxies);
-    },
+      // Read trap:
+      get: function (target, p) {
+        if (p === unchanged) return target[p];
+        if (target[p] !== frozen[p]) return target[p];
+        // Functions are still returned frozen
+        if (!isObject(target[p])) return target[p];
+        return createProxy(frozen[p], cache);
+      },
+    });
+    setCache(proxy);
   });
 }
 ```
@@ -139,6 +145,10 @@ Recurse with the following stop conditions:
 - changedObjectCache contains value
 - value and all deep children have unchanged marker set
 
+We set the symbol `[[frozen]]` to true on any frozen object. This indicates that
+the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
+shallow object.
+
 ```typescript
 const frozen = Symbol('frozen');
 
@@ -149,7 +159,7 @@ function isUnfrozenObject(val: unknown): val is object {
 function freeze(root: unknown) {
   if (!isObject(root)) return Object.freeze(root);
   normalizeUnchangedMarker(root);
-  const cloneCache = new Map();
+  const cloneCache = new Cache<object>();
   const result = cloneChanged(root, cloneCache);
 
   cloneCache.forEach(obj => {
@@ -159,21 +169,22 @@ function freeze(root: unknown) {
   return result;
 }
 
-function cloneChanged(val: unknown, cloneCache: ObjectCache) {
+function cloneChanged(val: unknown, cache: Cache<object>) {
   // Simple Cases - No cloning needed
   if (typeof val === 'function') return Object.freeze(val);
   if (!isUnfrozenObject(val)) return val;
   if (val[unchanged]) return val[unchanged];
   if (val instanceof Date) return val.toISOString();
-  if (cloneCache.has(val)) return cloneCache.get(val);
 
   // Clone and recurse
-  const cloned = shallowCloneObject(val);
-  cloneCache.set(val, cloned);
-  for (var prop in cloned) {
-    cloned[prop] = cloneChanged(cloned[prop], cloneCache);
-  }
-  return cloned;
+  return cache.caching(val, setCache => {
+    const cloned = shallowCloneObject(val);
+    setCache(cloned);
+
+    for (var prop in cloned) {
+      cloned[prop] = cloneChanged(cloned[prop], cloneCache);
+    }
+  });
 }
 ```
 
@@ -183,8 +194,8 @@ TODO the most minimal interface.
 abstract class StateMinimal {
   __frozen = freeze({});
 
-  rootProp = (prop: string) => this.__frozen[prop];
-  rootUpdate(action: (data: object) => void): void {
+  root = (prop: string) => this.__frozen[prop];
+  update(action: (data: object) => void): void {
     const root = createProxyCached(this.__frozen, new Map());
     action(root);
     this.__frozen = freeze(root);
@@ -194,9 +205,63 @@ abstract class StateMinimal {
 }
 ```
 
-Helper functions for complex state:
+The more useable state object
 
-- Parse path
+```typescript
+export class State extends StateMinimal {
+  __cacheGet = new Cache<Get>();
+
+  get(path: string) {
+    return createGet(path, this.__cacheGet)(this);
+  }
+  set(path: string, value: unknown) {
+    this.update(path, ({ parent, key }) => (parent[prop] = value));
+  }
+  map(path: string, action: (ctx: WriteCtx) => void) {
+    this.update(data => action(initialize(path, data)));
+  }
+  onChange() {
+    __cacheGet.clear();
+  }
+}
+```
+
+Layer that manages computable's
+
+```typescript
+type Computable = (state: State) => unknown;
+type ComputableObj = { [prop: string]: Computable };
+
+export function computed(state: State, comp: ComputableObj): State {
+  let cacheResult = new Cache<unknown>();
+  let cacheFrozen = null;
+
+  // root(...) is not cached so no other cache invalidation is needed
+  function clearCache() {
+    cacheResult.clear();
+    cacheFrozen = state.__frozen;
+  }
+
+  function root(prop: string) {
+    const that = this;
+    if (!comp[prop]) return state.root(comp[prop]);
+    if (cacheFrozen !== state.__frozen) clearCache();
+
+    return cacheResult.caching(func, setCache => {
+      try {
+        setCache(freeze(comp[prop](that)));
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
+  return Object.setPrototypeOf({ root }, state);
+}
+```
+
+Paths and accessors
+
+Interface: Get, WriteCtx, createGet, initialize
 
 ```typescript
 const isArrayProp = (prop: any) => +prop >= 0;
@@ -208,88 +273,28 @@ function getExpectedObject(val: unknown, isArray: boolean) {
   return val;
 }
 
-type PathSection = { p: string; ref?: true };
-type Path = { get: () => unknown; ensure: () => WriteCtx };
+type Segment = { p: string; ref?: true };
 type WriteCtx = { parent: object; prop: string | number };
+type Getter = () => unknown;
+type Writer = () => WriteCtx;
 
-function parsePath(input: string): PathSection[] {
+function parsePath(input: string): Segment[] {
+  // TODO 2 - cache!
   function section(p) {
     return p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
   }
   return input.split('/').map(section);
 }
 
-function parse(path: string, cache: Map<string, Path>): Path {
-  if (!cache.has(path)) {
-    let sections = parsePath(path);
-    cache.set(path, {
-      get: compileCachedGetter(sections),
-      ensure: createWriteEnsurer(sections),
-    });
-  }
-  return cache.get(path)!;
+function createGetter(path: string, cache: Cache<Getter>): Getter {
+  return cache.caching(path, setCache => {
+    let segments = parsePath(path);
+    // TODO 1 - actually compile
+  });
 }
 
-function compileCachedGetter(path: PathSection[]) {
-  // TODO 3 - actually compile
-  return () => undefined;
-}
-
-function createWriteEnsurer(path: PathSection[], from?: WriteCtx) {
+function createBuilder(path: string, from?: WriteCtx): WriteCtx {
+  let segments = parsePath(path);
   return () => ({ parent: {}, prop: 123 });
-}
-```
-
-The more useable state object
-
-```typescript
-export class State extends StateMinimal {
-  __pathCache = new Map<string, Path>();
-  get(path: string) {
-    let { get } = parse(path, this.__pathCache);
-    return get(this);
-  }
-  set(path: string, value: unknown) {
-    let { ensure } = parse(path, this.__pathCache);
-    let { parent, prop } = ensure(this);
-  }
-  update(path: string, action: (data: object) => void) {}
-  onChange() {}
-}
-```
-
-Layer that manages computable's
-
-```typescript
-export type Computable = (state: State) => unknown;
-export type ComputableObj = { [prop: string]: Computable };
-
-export function deriveComputable(state: State, comp: ComputableObj): State {
-  let derived = Object.create(state);
-  let isRunning = false; // Stops infinite recursion issues
-
-  let cacheFrozen = null;
-  let cacheComputed = new Map<Computable, unknown>();
-
-  derived.rootProp = function (prop: string) {
-    let func = comp[prop];
-    if (!func) return state.rootProp(prop);
-    // This is enough, since rootProps aren't cached no top level cache invalidation is needed
-    if (cacheFrozen !== state.__frozen) cacheComputed.clear();
-    if (cacheComputed.has(func)) return cacheComputed.get(func);
-    if (isRunning) return undefined;
-    let result: unknown = undefined;
-    try {
-      isRunning = true;
-      result = freeze(func(this));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      isRunning = false;
-      cacheComputed.set(func, result);
-    }
-    return result;
-  };
-  return derived;
 }
 ```
