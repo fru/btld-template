@@ -166,16 +166,15 @@ export function computed(state: State, comp: ComputableObj): State {
   let cacheResult = new Cache<unknown>();
   let cacheFrozen = null;
 
-  // root(...) is not cached so no other cache invalidation is needed
-  function clearCache() {
-    cacheResult.clear();
-    cacheFrozen = state.__frozen;
-  }
-
   function root(prop: string) {
     const that = this;
     if (!comp[prop]) return state.root(prop);
-    if (cacheFrozen !== state.__frozen) clearCache();
+
+    // root(...) is not cached so no other cache invalidation is needed
+    if (cacheFrozen !== state.__frozen) {
+      cacheResult.clear();
+      cacheFrozen = state.__frozen;
+    }
 
     return cacheResult.caching(comp[prop], setCache => {
       try {
