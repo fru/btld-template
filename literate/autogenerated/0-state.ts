@@ -143,23 +143,24 @@ export function deriveComputable(state: State, comp: ComputableObj): State {
   let isRunning = false; // Stops infinite recursion issues
 
   let cacheFrozen = null;
-  let cacheComputed = new Map<string, unknown>();
+  let cacheComputed = new Map<Computable, unknown>();
 
   derived.rootProp = function (prop: string) {
-    if (!comp[prop]) return state.rootProp(prop);
+    let func = comp[prop];
+    if (!func) return state.rootProp(prop);
     // This is enough, since rootProps aren't cached no top level cache invalidation is needed
     if (cacheFrozen !== state.__frozen) cacheComputed.clear();
-    if (cacheComputed.has(prop)) return cacheComputed.get(prop);
+    if (cacheComputed.has(func)) return cacheComputed.get(func);
     if (isRunning) return undefined;
     let result: unknown = undefined;
     try {
       isRunning = true;
-      result = freeze(comp[prop](this));
+      result = freeze(func(this));
     } catch (e) {
       console.error(e);
     } finally {
       isRunning = false;
-      cacheComputed.set(prop, result);
+      cacheComputed.set(func, result);
     }
     return result;
   };
@@ -175,31 +176,35 @@ export function getExpectedObject(val: unknown, isArray: boolean) {
   return val;
 }
 
-export type Path = { get: PathGetter; write: PathWriter };
-export type PathGetter = () => unknown;
-export type PathWriter = () => {
-  parent: object;
-  prop: string | number;
-};
+export type PathSection = { p: string; ref?: true };
+export type Path = { get: () => unknown; write: () => WriteCtx };
+export type WriteCtx = { parent: object; prop: string | number };
+
+export function parsePath(input: string): PathSection[] {
+  return input.split('/').map(p => {
+    if (!p.startsWith(':')) return { p };
+    return { p: p.substring(1), ref: true };
+  });
+}
 
 export function parse(path: string, cache: Map<string, Path>): Path {
   if (!cache.has(path)) {
-    // TODO 1 - actually parse
-
+    let sections = parsePath(path);
     cache.set(path, {
-      get: compileCachedGetter(['test', 123]),
-      write: function write() {
-        // TODO 2 - actually write recurse
-        return { parent: {}, prop: 123 };
-      },
+      get: compileCachedGetter(sections),
+      write: compileWriter(sections),
     });
   }
   return cache.get(path)!;
 }
 
-export function compileCachedGetter(props: (string | number)[]): PathGetter {
+export function compileCachedGetter(path: PathSection[]) {
   // TODO 3 - actually compile
   return () => undefined;
+}
+
+export function compileWriter(path: PathSection[], from?: WriteCtx) {
+  return () => ({ parent: {}, prop: 123 });
 }
 
 export class State extends StateMinimal {

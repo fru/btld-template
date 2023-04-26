@@ -244,14 +244,15 @@ export function getExpectedObject(val: unknown, isArray: boolean) {
   return val;
 }
 
-export type PathSection = { p: string, ref?: true };
+export type PathSection = { p: string; ref?: true };
 export type Path = { get: () => unknown; write: () => WriteCtx };
-export type WriteCtx = { parent: object, prop: string | number };
+export type WriteCtx = { parent: object; prop: string | number };
 
 export function parsePath(input: string): PathSection[] {
-  return input.split('/').map(p => (
-    p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
-  ));
+  return input.split('/').map(p => {
+    if (!p.startsWith(':')) return { p };
+    return { p: p.substring(1), ref: true };
+  });
 }
 
 export function parse(path: string, cache: Map<string, Path>): Path {
@@ -260,12 +261,9 @@ export function parse(path: string, cache: Map<string, Path>): Path {
     cache.set(path, {
       get: compileCachedGetter(sections),
       write: compileWriter(sections),
-
     });
   }
   return cache.get(path)!;
-
-
 }
 
 export function compileCachedGetter(path: PathSection[]) {
@@ -273,15 +271,9 @@ export function compileCachedGetter(path: PathSection[]) {
   return () => undefined;
 }
 
-export function compileWriter(path: PathSection, from?: WriteCtx) {
-
-
-
-
+export function compileWriter(path: PathSection[], from?: WriteCtx) {
   return () => ({ parent: {}, prop: 123 });
 }
-
-
 ```
 
 ```typescript
@@ -296,20 +288,3 @@ export class State extends StateMinimal {
   onChange() {}
 }
 ```
-
-// TODO 5 Computed on change exception handling
-
-## TODO's
-
-Root override state:
-
-- item, index & formatters are computed
-- Only mixins provide computable's
-- Separate from state (always on root level)
-- Frozen and cached
-- Cleared on state change or by mixins
-- Can access each other with just a simple get(path);
-
-TODO 2 !!!!!!! => How to change index but keep specialized CompState with
-formatters Use prototype chain? ComputableState + add computable -> Child
-ComputableState changes
