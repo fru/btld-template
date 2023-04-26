@@ -244,10 +244,10 @@ export function computed(state: State, comp: ComputableObj): State {
 
   function root(prop: string) {
     const that = this;
-    if (!comp[prop]) return state.root(comp[prop]);
+    if (!comp[prop]) return state.root(prop);
     if (cacheFrozen !== state.__frozen) clearCache();
 
-    return cacheResult.caching(func, setCache => {
+    return cacheResult.caching(comp[prop], setCache => {
       try {
         setCache(freeze(comp[prop](that)));
       } catch (e) {
