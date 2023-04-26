@@ -45,14 +45,14 @@ Cache
 
 ```typescript
 class Cache<V> extends Map<any, V> {
-  caching(key: any, creator?: (setCache: (V) => void) => void): V {
-    if (!this.__store.has(key) && creator) {
+  caching(key: any, creator?: (setCache: (V) => void) => void): V | undefined {
+    if (!this.has(key) && creator) {
       // Stops infinite recursion issues
-      this.__store.set(key, undefined);
+      this.set(key, undefined as V);
       // Create cache entry
-      creator(c => this.__store.set(key, c));
+      creator(c => this.set(key, c));
     }
-    return this.__store.get(key);
+    return this.get(key);
   }
 }
 ```
@@ -182,7 +182,7 @@ function cloneChanged(val: unknown, cache: Cache<object>) {
     setCache(cloned);
 
     for (var prop in cloned) {
-      cloned[prop] = cloneChanged(cloned[prop], cloneCache);
+      cloned[prop] = cloneChanged(cloned[prop], cache);
     }
   });
 }
@@ -196,8 +196,8 @@ abstract class StateMinimal {
 
   root = (prop: string) => this.__frozen[prop];
   update(action: (data: object) => void): void {
-    const root = createProxyCached(this.__frozen, new Map());
-    action(root);
+    const root = createProxy(this.__frozen, new Cache());
+    action(root!);
     this.__frozen = freeze(root);
     this.onChange();
   }
