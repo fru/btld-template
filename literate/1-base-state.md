@@ -1,14 +1,13 @@
 # Base State
 
-This is the literary code that defines how data is stored and reactivity is
-implemented for the btld templating engine.
+This is the literary code that defines how data is stored and how reactivity is
+implemented in the btld templating engine.
 
-We employ a technique that involves freezing all the data utilized for rendering
-components. With the use of proxies, updates can still be made without the need
-to copy the entire data structure. Instead, a new frozen state is generated, and
-only the modified properties are updated, leading to improved performance. This
-is heavily inspired by the amazing [immer.js](https://github.com/immerjs/immer)
-library.
+We use a technique that involves freezing all the data used for rendering
+components. By using proxies, updates can be made without copying the entire
+data structure. Instead, a new frozen state is generated, and only the modified
+properties are updated, resulting in improved performance. This is heavily
+inspired by the amazing [immer.js](https://github.com/immerjs/immer) library.
 
 ## Other Frameworks
 
@@ -212,8 +211,9 @@ export { isUnfrozenObject, Cache };
 
 export class BaseState {
   __frozen = freeze({});
-  frozen() {
-    return this.__frozen;
+
+  frozen(prop: string) {
+    return this.__frozen[prop];
   }
 
   update(action: (data: object) => void): void {
