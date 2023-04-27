@@ -25,10 +25,9 @@ modifying the current state directly. Vue 3 has enhanced its capabilities from
 version 2 by incorporating Proxies. Although, while retrieving data, Proxies are
 also employed which can lead to inconsistent equality comparisons.
 
-## A: Freezing
+## A: Utilities
 
-Our approach relies on freezing the data first and then unfreezing it for the
-update proxy, just to freeze again after the changes are done.
+Okay, so lets start with some utilities for type checking, cloning and caching.
 
 ```typescript
 function isObject(value: unknown): value is object {
@@ -39,11 +38,7 @@ function shallowCloneObject(value: object): object {
   if (Array.isArray(value)) return value.slice(0);
   return Object.assign({}, value);
 }
-```
 
-Cache
-
-```typescript
 class Cache<V> extends Map<any, V> {
   caching(key: any, creator?: (setCache: (V) => void) => void): V | undefined {
     if (!this.has(key) && creator) {
@@ -57,8 +52,14 @@ class Cache<V> extends Map<any, V> {
 }
 ```
 
-Another symbol `[[unchanged]]` is used to mark if a shallow object has been
-modified trough the update proxy using the traps `set` and `deleteProperty`
+## B: Update Proxy
+
+Our approach relies on freezing the data first. With the help of the following
+update proxy the data can still be modified. We mark which parts of the update
+proxy are still unchanged.
+
+The symbol `[[unchanged]]` is used to mark if a shallow object has been modified
+trough the update proxy using the traps `set` and `deleteProperty`.
 
 ```typescript
 const unchanged = Symbol('unchanged');
@@ -97,17 +98,26 @@ function createProxy(frozen: object, cache: Cache<object>) {
 }
 ```
 
-We set the unchanged marker on set and delete only on the direct parent. In
-order to refreeze the changes we need to normalize the unchanged marker. This
-means that every parent of an object with [unchanged] === false is also set to
-false.
+## C: Normalize `[[unchanged]]`
+
+The previously defined update proxy only marks direct objects that have been
+changed. However, for the refreezing operation, it's important to know not only
+if a direct object has changed, but also whether there are any changes in its
+child objects. To accomplish this, a normalization function is used to set the
+appropriate parent property `[[unchanged]]` to `false`.
+
+This is achieved in two steps: first, all directly changed objects are collected
+into `changedDirectly`, and all parent-child relationships are identified and
+stored in `childToParents`. Second, these relationships are iterated, and the
+parent objects that were identified in the previous step are marked as changed.
 
 ```typescript
 function normalizeUnchangedMarker(root: object) {
-  const changedDirectly = new Set<object>();
-  const stopIterating = new Set();
-  // One object can have many parents
+  // Because this is an object graph, any object can have many parents
   const childToParents = new Map<object, object[]>();
+  const changedDirectly = new Set<object>();
+
+  const stopIterating = new Set();
 
   (function fillMappings(val: object) {
     if (val && !val[unchanged]) changedDirectly.add(val);
@@ -135,6 +145,8 @@ function normalizeUnchangedMarker(root: object) {
   changedDirectly.forEach(normalizeIterateParents);
 }
 ```
+
+## D: Freeze
 
 Now its time to recursively clone all objects that are not fully marked as
 unchanged. This is used when freezing an object tree.
