@@ -44,11 +44,11 @@ function shallowCloneObject(value: object): object {
   return Object.assign({}, value);
 }
 
-class Cache<V> extends Map<any, V> {
+class Cache<V> extends Map<any, V | undefined> {
   caching(key: any, creator?: (setCache: (V) => void) => void): V | undefined {
     if (!this.has(key) && creator) {
       // Stops infinite recursion issues
-      this.set(key, undefined as V);
+      this.set(key, undefined);
       // Create cache entry
       creator(c => this.set(key, c));
     }
@@ -80,19 +80,17 @@ function createProxy(frozen: object, cache: Cache<object>) {
       setPrototypeOf: () => false, // Disallow prototype
 
       // Write traps:
-      set: function (target) {
+      set: function (target: any, p: PropertyKey, value: any) {
         target[unchanged] = false;
-        // @ts-ignore: next-line
-        return Reflect.set(...arguments);
+        return Reflect.set(target, p, value);
       },
-      deleteProperty: function (target) {
+      deleteProperty: function (target: any, p: PropertyKey) {
         target[unchanged] = false;
-        // @ts-ignore: next-line
-        return Reflect.deleteProperty(...arguments);
+        return Reflect.deleteProperty(target, p);
       },
 
       // Read trap:
-      get: function (target, p) {
+      get: function (target: any, p: PropertyKey) {
         if (p === unchanged) return target[p];
         if (target[p] !== frozen[p]) return target[p];
         // Functions are still returned frozen
@@ -178,8 +176,10 @@ function freeze(root: unknown) {
   const result = cloneChanged(root, cloneCache);
 
   cloneCache.forEach(obj => {
-    obj[frozen] = true;
-    Object.freeze(obj);
+    if (obj) {
+      obj[frozen] = true;
+      Object.freeze(obj);
+    }
   });
   return result;
 }
