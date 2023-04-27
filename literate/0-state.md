@@ -54,12 +54,14 @@ class Cache<V> extends Map<any, V> {
 
 ## B: Update Proxy
 
-Our approach relies on freezing the data first. With the help of the following
-update proxy the data can still be modified. We mark which parts of the update
-proxy are still unchanged.
+Our approach relies on first freezing the data. However, with the help of the
+following update proxy, the data can still be modified while also marking which
+parts of the data remain unchanged.
 
-The symbol `[[unchanged]]` is used to mark if a shallow object has been modified
-trough the update proxy using the traps `set` and `deleteProperty`.
+Specifically, the symbol `[[unchanged]]` is used to indicate whether a shallow
+object has been modified through the update proxy using the `set` and
+`deleteProperty` traps. If unchanged this property points to the frozen object
+otherwise it is set to false.
 
 ```typescript
 const unchanged = Symbol('unchanged');
