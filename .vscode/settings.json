@@ -25,6 +25,7 @@
         "btld",
         "immer",
         "instanceof",
+        "templating",
         "typeof"
     ],
 }

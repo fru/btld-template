@@ -1,7 +1,7 @@
-# Reactivity aka. Model Change Detection
+# Base State
 
-Reactivity is a key differentiator among front-end frameworks. Each framework
-has its unique approach to data synchronization and DOM manipulation.
+This is the literary code that defines how data is stored and reactivity is
+implemented for the btld templating engine.
 
 We employ a technique that involves freezing all the data utilized for rendering
 components. With the use of proxies, updates can still be made without the need
@@ -10,13 +10,16 @@ only the modified properties are updated, leading to improved performance. This
 is heavily inspired by the amazing [immer.js](https://github.com/immerjs/immer)
 library.
 
-### Other Frameworks
+## Other Frameworks
 
-Other frameworks have their own approaches. For example, React uses a virtual
-DOM and compares two versions to detect changes. Angular 2 re-evaluates
-expressions used in components and improves performance with VM inline caching.
-Vue 2 uses a reactive system that watches the properties accessed during
-rendering using getters and setters provided by Object.defineProperty().
+Reactivity is a key differentiator among front-end frameworks. Each framework
+has its unique approach to data synchronization and DOM adaptation.
+
+For example, React uses a virtual DOM and compares two versions to detect
+changes. Angular 2 re-evaluates expressions used in components and improves
+performance with VM inline caching. Vue 2 uses a reactive system that watches
+the properties accessed during rendering using getters and setters provided by
+Object.defineProperty().
 
 However, when dealing with deeply nested data, these approaches can present
 challenges. Redux, a state management library commonly used with React,
@@ -198,114 +201,25 @@ function cloneChanged(val: unknown, cache: Cache<object>) {
 }
 ```
 
-## E: StateMinimal
+## E: BaseState
 
-TODO the most minimal interface.
+Finally, let's define the BaseState class for which all the previous methods
+were created. This class provides just two simple methods: one for retrieving
+the current frozen state, and another for updating it.
 
 ```typescript
-class StateMinimal {
-  __frozen = freeze({});
+export { isUnfrozenObject, Cache };
 
-  root = (prop: string) => this.__frozen[prop];
+export class BaseState {
+  __frozen = freeze({});
+  frozen() {
+    return this.__frozen;
+  }
+
   update(action: (data: object) => void): void {
     const root = createProxy(this.__frozen, new Cache());
     action(root!);
     this.__frozen = freeze(root);
-    this.onChange();
   }
-  onChange() {}
-}
-```
-
-The more useable state object
-
-```typescript
-export class State extends StateMinimal {
-  __cacheGet = new Cache<Get>();
-
-  get(path: string) {
-    return createGet(path, this.__cacheGet)(this);
-  }
-  set(path: string, value: unknown) {
-    this.update(path, ({ parent, key }) => (parent[prop] = value));
-  }
-  map(path: string, action: (ctx: WriteCtx) => void) {
-    this.update(data => action(initialize(path, data)));
-  }
-  onChange() {
-    __cacheGet.clear();
-  }
-}
-```
-
-Layer that manages computable's
-
-```typescript
-type Computable = (state: State) => unknown;
-type ComputableObj = { [prop: string]: Computable };
-
-export function computed(state: State, comp: ComputableObj): State {
-  let cacheResult = new Cache<unknown>();
-  let cacheFrozen = null;
-
-  function root(prop: string) {
-    const that = this;
-    if (!comp[prop]) return state.root(prop);
-
-    // root(...) is not cached so no other cache invalidation is needed
-    if (cacheFrozen !== state.__frozen) {
-      cacheResult.clear();
-      cacheFrozen = state.__frozen;
-    }
-
-    return cacheResult.caching(comp[prop], setCache => {
-      try {
-        setCache(freeze(comp[prop](that)));
-      } catch (e) {
-        console.error(e);
-      }
-    });
-  }
-  return Object.setPrototypeOf({ root }, state);
-}
-```
-
-Paths and accessors
-
-Interface: Get, WriteCtx, createGet, initialize
-
-```typescript
-const isArrayProp = (prop: any) => +prop >= 0;
-
-function getExpectedObject(val: unknown, isArray: boolean) {
-  if (val === null || val === undefined) return isArray ? [] : {};
-  if (!isUnfrozenObject(val)) return false;
-  if (Array.isArray(val) !== isArray) return false;
-  return val;
-}
-
-type Segment = { p: string; ref?: true };
-type WriteCtx = { parent: object; prop: string | number };
-type Getter = () => unknown;
-type Writer = () => WriteCtx;
-
-function parsePath(input: string): Segment[] {
-  // TODO 2 - cache!
-  function section(p) {
-    return p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
-  }
-  return input.split('/').map(section);
-}
-
-function createGetter(path: string, cache: Cache<Getter>): Getter {
-  return cache.caching(path, setCache => {
-    let segments = parsePath(path);
-    // TODO 1 - actually compile
-  });
-}
-
-function createBuilder(path: string, from?: WriteCtx): WriteCtx {
-  let segments = parsePath(path);
-  return () => ({ parent: {}, prop: 123 });
 }
 ```
