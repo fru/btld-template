@@ -9,7 +9,7 @@ data structure. Instead, a new frozen state is generated, and only the modified
 properties are updated, resulting in improved performance. This is heavily
 inspired by the amazing [immer.js](https://github.com/immerjs/immer) library.
 
-### Other Frameworks
+## Other Frameworks
 
 Reactivity is a key differentiator among front-end frameworks. Each framework
 has its unique approach to data synchronization and DOM adaptation.
@@ -27,7 +27,7 @@ modifying the current state directly. Vue 3 has enhanced its capabilities from
 version 2 by incorporating Proxies. Although, while retrieving data, Proxies are
 also employed which can lead to inconsistent equality comparisons.
 
-### A: Utilities
+## A: Utilities
 
 Let's start by defining some utilities for type checking, cloning, and caching.
 
@@ -54,7 +54,7 @@ class Cache<V> extends Map<any, V> {
 }
 ```
 
-### B: Update Proxy
+## B: Update Proxy
 
 Our approach relies on first freezing the data. However, with the help of the
 following update proxy, the data can still be modified while also marking which
@@ -102,7 +102,7 @@ function createProxy(frozen: object, cache: Cache<object>) {
 }
 ```
 
-### C: Normalize `[[unchanged]]`
+## C: Normalize `[[unchanged]]`
 
 The previously defined update proxy only marks direct objects that have been
 changed. However, for the refreezing operation, it's important to know not only
@@ -150,7 +150,7 @@ function normalizeUnchangedMarker(root: object) {
 }
 ```
 
-### D: Freeze
+## D: Freeze
 
 We can now define the freezing function. This function takes any object and
 returns a version of it that is frozen. It respects the `[[unchanged]]` property
@@ -200,7 +200,7 @@ function cloneChanged(val: unknown, cache: Cache<object>) {
 }
 ```
 
-### E: BaseState
+## E: BaseState
 
 Finally, let's define the BaseState class for which all the previous methods
 were created. This class provides just two simple methods: one for retrieving
