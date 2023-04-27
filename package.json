@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "literate": "node build/build-literate.mjs",
+    "bundle": "node build/build-bundle.js",
     "test": "playwright-test test/specification/*.js --runner mocha --watch",
     "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
     "build": "node esbuild.mjs",
