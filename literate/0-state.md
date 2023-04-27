@@ -27,7 +27,7 @@ also employed which can lead to inconsistent equality comparisons.
 
 ## A: Utilities
 
-Okay, so lets start with some utilities for type checking, cloning and caching.
+Let's start by defining some utilities for type checking, cloning, and caching.
 
 ```typescript
 function isObject(value: unknown): value is object {
@@ -60,8 +60,8 @@ parts of the data remain unchanged.
 
 Specifically, the symbol `[[unchanged]]` is used to indicate whether a shallow
 object has been modified through the update proxy using the `set` and
-`deleteProperty` traps. If unchanged this property points to the frozen object
-otherwise it is set to false.
+`deleteProperty` traps. If unchanged, this property points to the frozen object.
+Otherwise, it is set to false to indicate that the object has been modified.
 
 ```typescript
 const unchanged = Symbol('unchanged');
@@ -150,18 +150,14 @@ function normalizeUnchangedMarker(root: object) {
 
 ## D: Freeze
 
-Now its time to recursively clone all objects that are not fully marked as
-unchanged. This is used when freezing an object tree.
+We can now define the freezing function. This function takes any object and
+returns a version of it that is frozen. It respects the `[[unchanged]]` property
+and uses the property value when it is set.
 
-Recurse with the following stop conditions:
-
-- value does not need deep freeze
-- changedObjectCache contains value
-- value and all deep children have unchanged marker set
-
-We set the symbol `[[frozen]]` to true on any frozen object. This indicates that
-the whole subtree is frozen. Testing for `Object.isFrozen()` only checks the
-shallow object.
+To indicate that the entire subtree is frozen, we set the symbol `[[frozen]]` to
+`true` on any frozen object. It is important to note that testing for
+`Object.isFrozen()` only checks the shallow object, so using `[[frozen]]` allows
+us to determine if the whole subtree is frozen.
 
 ```typescript
 const frozen = Symbol('frozen');
@@ -202,10 +198,12 @@ function cloneChanged(val: unknown, cache: Cache<object>) {
 }
 ```
 
+## E: StateMinimal
+
 TODO the most minimal interface.
 
 ```typescript
-abstract class StateMinimal {
+class StateMinimal {
   __frozen = freeze({});
 
   root = (prop: string) => this.__frozen[prop];
@@ -215,7 +213,7 @@ abstract class StateMinimal {
     this.__frozen = freeze(root);
     this.onChange();
   }
-  abstract onChange(): void;
+  onChange() {}
 }
 ```
 
