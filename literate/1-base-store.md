@@ -1,4 +1,4 @@
-# Base State
+# Base Store
 
 This is the literary code that defines how data is stored and how reactivity is
 implemented in the btld templating engine.
@@ -8,6 +8,9 @@ components. By using proxies, updates can be made without copying the entire
 data structure. Instead, a new frozen state is generated, and only the modified
 properties are updated, resulting in improved performance. This is heavily
 inspired by the amazing [immer.js](https://github.com/immerjs/immer) library.
+
+Since every change creates new frozen objects, we can simply use equality
+comparisons to determine if there are any changes in the current state graph.
 
 ## Other Frameworks
 
@@ -200,16 +203,16 @@ function cloneChanged(val: unknown, cache: Cache<object>) {
 }
 ```
 
-## E: BaseState
+## E: BaseStore
 
-Finally, let's define the BaseState class for which all the previous methods
+Finally, let's define the BaseStore class for which all the previous methods
 were created. This class provides just two simple methods: one for retrieving
 the current frozen state, and another for updating it.
 
 ```typescript
 export { isUnfrozenObject, Cache };
 
-export class BaseState {
+export class BaseStore {
   __frozen = freeze({});
 
   frozen(prop: string) {
