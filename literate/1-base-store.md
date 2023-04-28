@@ -207,7 +207,7 @@ function cloneChanged(val: unknown, cache: Cache<object>) {
 
 Finally, let's define the BaseStore class for which all the previous methods
 were created. This class provides just two simple methods: one for retrieving
-the current frozen state, and another for updating it.
+the current frozen state, and another for altering it.
 
 ```typescript
 export { isUnfrozenObject, Cache };
@@ -215,11 +215,11 @@ export { isUnfrozenObject, Cache };
 export class BaseStore {
   __frozen = freeze({});
 
-  frozenRoot(prop: string) {
+  get(prop: string) {
     return this.__frozen[prop];
   }
 
-  updateRoot(action: (data: object) => void): void {
+  alter(action: (data: object) => void): void {
     const root = createProxy(this.__frozen, new Cache());
     action(root!);
     this.__frozen = freeze(root);
