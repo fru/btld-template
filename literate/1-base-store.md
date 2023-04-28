@@ -215,11 +215,11 @@ export { isUnfrozenObject, Cache };
 export class BaseStore {
   __frozen = freeze({});
 
-  frozen(prop: string) {
+  frozenRoot(prop: string) {
     return this.__frozen[prop];
   }
 
-  update(action: (data: object) => void): void {
+  updateRoot(action: (data: object) => void): void {
     const root = createProxy(this.__frozen, new Cache());
     action(root!);
     this.__frozen = freeze(root);
