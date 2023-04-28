@@ -10,12 +10,12 @@ var { watch, test } = argv;
 
 let mangleCache = JSON.parse(fs.readFileSync('./build/naming-cache.json'));
 let options = {
-  entryPoints: argv['_'],
+  entryPoints: ['dist/literate/1-base-store.ts'],
   bundle: true,
   outfile: 'dist/' + (test ? 'test.js' : 'bundle.js'),
   format: 'esm',
   minify: true,
-  mangleProps: /./,
+  mangleProps: /\$$/,
   mangleCache,
 };
 

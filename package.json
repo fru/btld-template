@@ -8,7 +8,6 @@
     "literate-w": "npm run literate -- --watch",
     "types": "npm run literate && tsc -p build",
     "bundle": "node build/build-bundle.mjs --watch --test",
-
     "test": "playwright-test test/specification/*.js --runner mocha --watch",
     "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
     "tdd-code": "npm run build -- literate/0-state.md --watch --tdd",
