@@ -210,7 +210,7 @@ were created. This class provides just two simple methods: one for retrieving
 the current frozen state, and another for altering it.
 
 ```typescript
-export { isUnfrozenObject, Cache };
+export { Cache };
 
 export class BaseStore {
   __frozen = freeze({});
@@ -224,6 +224,8 @@ export class BaseStore {
     action(root!);
     this.__frozen = freeze(root);
   }
+
+  static frozen = (val: any) => val && val[frozen];
 }
 ```
 
