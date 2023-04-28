@@ -4,14 +4,17 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import minimist from 'minimist';
 
+var argv = minimist(process.argv.slice(2));
+
 // Config
 const basedir = '..';
 const watch = 'literate';
-const destination = 'dist/literate';
+const destination = argv.test ? 'dist/testing' : 'dist/literate';
 const outExt = '.ts';
 const glob = './*.md';
+const languages = ['typescript'];
+if (argv.test) languages.push('typescript test');
 
-var argv = minimist(process.argv.slice(2));
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const base = path.join(__dirname, basedir);
 
@@ -37,9 +40,9 @@ async function compile(relative) {
   console.log(`Extract code: ${relative}`);
 }
 
-function extract(text, languages = ['typescript']) {
+function extract(text) {
   let language = '(' + languages.filter(x => x).join('|') + ')';
-  let regex = new RegExp('```' + language + '([\\s\\S]+?)```', 'g');
+  let regex = new RegExp('```' + language + '[\r?\n|\r]([\\s\\S]+?)```', 'g');
   let code = [...text.matchAll(regex)].map(m => m[2].trim());
 
   return code.join('\n\n');

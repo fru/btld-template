@@ -226,3 +226,9 @@ export class BaseStore {
   }
 }
 ```
+
+For testing purposes we export some additional variables
+
+```typescript test
+console.log('Test code');
+```
