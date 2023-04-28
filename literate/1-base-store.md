@@ -44,7 +44,7 @@ function shallowCloneObject(value: object): object {
   return Object.assign({}, value);
 }
 
-class $Cache<V> extends Map<any, V | undefined> {
+class Cache<V> extends Map<any, V | undefined> {
   caching(key: any, creator?: (setCache: (V) => void) => void): V | undefined {
     if (!this.has(key) && creator) {
       // Stops infinite recursion issues
@@ -71,7 +71,7 @@ Otherwise, it is set to false to indicate that the object has been modified.
 ```typescript
 const unchanged = Symbol('unchanged');
 
-function createProxy(frozen: object, cache: $Cache<object>) {
+function createProxy(frozen: object, cache: Cache<object>) {
   return cache.caching(frozen, setCache => {
     const clone = shallowCloneObject(frozen);
     clone[unchanged] = frozen;
@@ -130,7 +130,7 @@ function normalizeUnchangedMarker(root: object) {
 
     for (var p in val) {
       let child = val[p];
-      if (!$isUnfrozenObject(child)) continue;
+      if (!isUnfrozenObject(child)) continue;
       // Fill parent map
       if (!childToParents.has(child)) childToParents.set(child, []);
       childToParents.get(child)!.push(val);
@@ -165,14 +165,14 @@ us to determine if the whole subtree is frozen.
 ```typescript
 const frozen = Symbol('frozen');
 
-function $isUnfrozenObject(val: unknown): val is object {
+function isUnfrozenObject(val: unknown): val is object {
   return isObject(val) && !val[frozen];
 }
 
 function freeze(root: unknown) {
   if (!isObject(root)) return Object.freeze(root);
   normalizeUnchangedMarker(root);
-  const cloneCache = new $Cache<object>();
+  const cloneCache = new Cache<object>();
   const result = cloneChanged(root, cloneCache);
 
   cloneCache.forEach(obj => {
@@ -184,10 +184,10 @@ function freeze(root: unknown) {
   return result;
 }
 
-function cloneChanged(val: unknown, cache: $Cache<object>) {
+function cloneChanged(val: unknown, cache: Cache<object>) {
   // Simple Cases - No cloning needed
   if (typeof val === 'function') return Object.freeze(val);
-  if (!$isUnfrozenObject(val)) return val;
+  if (!isUnfrozenObject(val)) return val;
   if (val[unchanged]) return val[unchanged];
   if (val instanceof Date) return val.toISOString();
 
@@ -210,17 +210,17 @@ were created. This class provides just two simple methods: one for retrieving
 the current frozen state, and another for updating it.
 
 ```typescript
-export { $isUnfrozenObject, $Cache };
+export { isUnfrozenObject, Cache };
 
-export class $BaseStore {
+export class BaseStore {
   __frozen = freeze({});
 
-  $frozen(prop: string) {
+  frozen(prop: string) {
     return this.__frozen[prop];
   }
 
-  $update(action: (data: object) => void): void {
-    const root = createProxy(this.__frozen, new $Cache());
+  update(action: (data: object) => void): void {
+    const root = createProxy(this.__frozen, new Cache());
     action(root!);
     this.__frozen = freeze(root);
   }

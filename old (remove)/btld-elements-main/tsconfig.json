@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-        "experimentalDecorators": true,
-        "jsx": "react",
-        "jsxFactory": "h",
-        "lib": ["DOM", "ES2019"],
-        "esModuleInterop": true
-    }
-}
