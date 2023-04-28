@@ -1,18 +1,21 @@
 import * as esbuild from 'esbuild';
 import fs from 'node:fs';
 import minimist from 'minimist';
+import { exec } from 'node:child_process';
+
+exec('npm run literate-w');
 
 var argv = minimist(process.argv.slice(2));
-var { watch, out } = argv;
+var { watch, test } = argv;
 
 let mangleCache = JSON.parse(fs.readFileSync('./build/naming-cache.json'));
 let options = {
   entryPoints: argv['_'],
   bundle: true,
-  outfile: 'dist/' + out,
+  outfile: 'dist/' + (test ? 'test.js' : 'bundle.js'),
   format: 'esm',
   minify: true,
-  mangleProps: /^\$/,
+  mangleProps: /./,
   mangleCache,
 };
 
