@@ -4,7 +4,8 @@
     "module": "es2015",
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
-    "isolatedModules": true
-  }
+    "outDir": "../dist/types"
+  },
+  "include": ["../dist/literate/**/*.ts"],
+  "exclude": ["node_modules"]
 }
