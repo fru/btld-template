@@ -6,6 +6,7 @@
   "scripts": {
     "cli": "npx -p ./.build -y build",
     "unittest": "npm run cli -- unittest src/1-base-store.md --watch",
+    "mocha": "mocha --watch ./dist/test.js",
     "Todo--------------": "",
     "literate-w": "npm run literate -- --watch",
     "types": "npm run literate && tsc -p build",

@@ -1,15 +1,21 @@
 import * as esbuild from 'esbuild';
 import { mdCodeExtract } from './literate.mjs';
 import path from 'node:path';
-import fs from 'node:fs';
 
-export async function bundle(prefix, paths, out, languages, test, watch) {
+export function getFile(out, test, esm) {
+  let ext = esm ? '.mjs' : '.js';
+  let name = (test ? 'test' : 'main') + ext;
+  return path.join(out, name);
+}
+
+export async function bundle(prefix, paths, out, languages, test, watch, esm) {
+  // TODO
   let mangleCache = {}; //JSON.parse(fs.readFileSync('./build/naming-cache.json'));
   let options = {
     entryPoints: paths.map(p => path.resolve(prefix, p)),
     bundle: true,
-    outfile: path.join(out, test ? 'test.js' : 'bundle.js'),
-    format: 'esm',
+    outfile: getFile(out, test, esm),
+    format: esm ? 'esm' : 'cjs',
     minify: true,
     mangleProps: /\$$/,
     mangleCache,
@@ -32,5 +38,5 @@ export async function bundle(prefix, paths, out, languages, test, watch) {
 }
 
 export function build({ prefix, paths }, out, languages) {
-  bundle(prefix, paths, out, languages, false, false);
+  bundle(prefix, paths, out, languages);
 }
