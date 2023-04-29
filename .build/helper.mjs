@@ -17,6 +17,10 @@ export function resolveInputGlobs(globs, ignoreRaw) {
   if (!files.length) {
     program.error('No input files found, use a glob like: src/**.md');
   }
+  if (files.length === 1) {
+    const f = path.parse(path.resolve(files[0]));
+    return { prefix: f.dir, paths: [f.base] };
+  }
   const prefix = commonPathPrefix(files);
   const paths = files.map(x => x.substring(prefix.length));
   return { prefix: path.resolve(prefix), paths };

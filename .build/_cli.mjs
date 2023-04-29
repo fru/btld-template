@@ -36,11 +36,12 @@ program
   .option('-i, --ignore <paths>', 'Ignore files', 'node_modules/** dist/**')
   .option('-o, --out <dir>', 'Output directory', './dist')
   .option('-l, --literate <lang>', 'Extract literate code', 'typescript')
+  .option('-w, --watch', 'Watch for changes')
   .action((globs, options) => {
     const files = resolveInputGlobs(globs, options.ignore);
     let literate = (options.literate || '').split(',');
     let out = resolveOutDir(options.out);
-    unittest(files, out, literate);
+    unittest(files, out, literate, options.watch);
   });
 
 program
