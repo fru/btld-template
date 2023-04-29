@@ -1,10 +1,11 @@
 {
-  "name": "btld",
+  "name": "@btld-web/monorepo",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "literate": "node build/build-literate.mjs",
+    "literate": "npx -p ./.build -y literate",
+    "Todo--------------": "",
     "literate-w": "npm run literate -- --watch",
     "types": "npm run literate && tsc -p build",
     "bundle": "node build/build-bundle.mjs --watch --test",
@@ -27,6 +28,9 @@
     "playwright-test": "^8.2.0",
     "typescript": "^5.0.4",
     "@types/minimist": "^1.2.2",
-    "@btld/build": "*"
-  }
+    "@btld-web/build": "*"
+  },
+  "workspaces": [
+    ".build"
+  ]
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@btld/build",
+  "name": "@btld-web/build",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
