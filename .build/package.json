@@ -5,7 +5,14 @@
   "main": "index.js",
   "author": "",
   "license": "ISC",
-  "bin": {
-    "literate": "./build-literate.mjs"
+  "bin": "./_cli.mjs",
+  "dependencies": {
+    "@types/minimist": "^1.2.2",
+    "chokidar": "^3.5.3",
+    "commander": "^10.0.1",
+    "esbuild": "0.17.11",
+    "minimist": "^1.2.8",
+    "playwright-test": "^8.2.0",
+    "typescript": "^5.0.4"
   }
 }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "literate": "npx -p ./.build -y literate",
+    "literate": "npx -p ./.build -y build",
     "Todo--------------": "",
     "literate-w": "npm run literate -- --watch",
     "types": "npm run literate && tsc -p build",
