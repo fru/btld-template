@@ -19,14 +19,16 @@ program
   .argument('<globs...>', 'File globs to be compiled')
   .option('-i, --ignore <paths>', 'Ignore files', 'node_modules/** dist/**')
   .option('-o, --out <dir>', 'Output directory', './dist')
+  .option('-e, --outExt <ext>', 'Output extension', '.ts')
   .option('-l, --languages <lang>', 'Code block languages, csv', 'typescript')
   .option('-t, --test', 'Include test code sections')
   .action((globs, options) => {
     const files = resolveInputGlobs(globs, options.ignore);
     let languages = options.languages.split(',');
     let out = resolveOutDir(options.out);
+    let outExt = options.outExt;
     let test = options.test;
-    literate(files, out, languages, test);
+    literate(files, out, languages, test, outExt);
   });
 
 program
