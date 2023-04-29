@@ -14,7 +14,7 @@ export function literate({ prefix, paths }, out, languages, test, outExt) {
   console.log('literate', files, out, languages, test);
 }
 
-export function markdown(languages, test) {
+export function mdCodeExtract(languages, test) {
   if (test) languages = addTestLanguages(languages);
   return {
     name: 'md-code-extract',
