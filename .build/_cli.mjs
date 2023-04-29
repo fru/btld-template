@@ -3,6 +3,9 @@
 
 import { Command } from 'commander';
 import { resolveInputGlobs, resolveOutDir } from './helper.mjs';
+import { literate } from './literate.mjs';
+import { unittest } from './unittest.mjs';
+import { build } from './build.mjs';
 
 const program = new Command();
 program
@@ -15,16 +18,44 @@ program
   .description('Extract code from .md files')
   .argument('<globs...>', 'File globs to be compiled')
   .option('-i, --ignore <paths>', 'Ignore files', 'node_modules/** dist/**')
-  .option('-o, --out <dir>', 'Code block language', './dist')
-  .option('-l, --languages <lang>', 'Code block languages csv', 'typescript')
+  .option('-o, --out <dir>', 'Output directory', './dist')
+  .option('-l, --languages <lang>', 'Code block languages, csv', 'typescript')
   .option('-t, --test', 'Include test code sections')
   .action((globs, options) => {
     const files = resolveInputGlobs(globs, options.ignore);
     let languages = options.languages.split(',');
     let out = resolveOutDir(options.out);
     let test = options.test;
+    literate(files, out, languages, test);
+  });
 
-    console.log(files, languages, out, test);
+program
+  .command('unittest')
+  .description('Run mocha unit tests')
+  .argument('<globs...>', 'File globs to be tested')
+  .option('-i, --ignore <paths>', 'Ignore files', 'node_modules/** dist/**')
+  .option('-o, --out <dir>', 'Output directory', './dist')
+  .option('-l, --literate <lang>', 'Extract literate code', 'typescript')
+  .action((globs, options) => {
+    const files = resolveInputGlobs(globs, options.ignore);
+    let literate = (options.literate || '').split(',');
+    let out = resolveOutDir(options.out);
+    unittest(files, out, literate);
+  });
+
+program
+  .command('build')
+  .description('Build file')
+  .argument('<entries...>', 'File globs to be build')
+  .option('-i, --ignore <paths>', 'Ignore files', 'node_modules/** dist/**')
+  .option('-o, --out <dir>', 'Output directory', './dist')
+  .option('-l, --literate <lang>', 'Extract literate code', 'typescript')
+  .option('-p, --mangleProps <file>', 'Use json file to mangle props')
+  .action((globs, options) => {
+    const files = resolveInputGlobs(globs, options.ignore);
+    let literate = (options.literate || '').split(',');
+    let out = resolveOutDir(options.out);
+    build(files, out, literate);
   });
 
 program.parse();
