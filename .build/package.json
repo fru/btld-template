@@ -10,6 +10,7 @@
     "@types/minimist": "^1.2.2",
     "chokidar": "^3.5.3",
     "commander": "^10.0.1",
+    "common-path-prefix": "^3.0.0",
     "esbuild": "0.17.11",
     "glob": "^10.2.2",
     "minimist": "^1.2.8",
