@@ -26,9 +26,7 @@
     "mocha": "^10.2.0",
     "playwright-test": "^8.2.0",
     "typescript": "^5.0.4",
-    "@types/minimist": "^1.2.2"
-  },
-  "bin": {
-    "build-literate": "./.bin/build-literate"
+    "@types/minimist": "^1.2.2",
+    "@btld/build": "*"
   }
 }
