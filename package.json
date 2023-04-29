@@ -1,5 +1,5 @@
 {
-  "name": "btld-template",
+  "name": "btld",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -17,7 +17,7 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "chai": "^4.3.7",
     "chokidar": "^3.5.3",
     "concurrently": "^7.6.0",
@@ -25,9 +25,10 @@
     "minimist": "^1.2.8",
     "mocha": "^10.2.0",
     "playwright-test": "^8.2.0",
-    "typescript": "^5.0.4"
-  },
-  "devDependencies": {
+    "typescript": "^5.0.4",
     "@types/minimist": "^1.2.2"
+  },
+  "bin": {
+    "build-literate": "./.bin/build-literate"
   }
 }
