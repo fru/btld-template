@@ -25,3 +25,7 @@ export function resolveInputGlobs(globs, ignoreRaw) {
   const paths = files.map(x => x.substring(prefix.length));
   return { prefix: path.resolve(prefix), paths };
 }
+
+export function setExtension(outExt, path) {
+  return path.format({ ...path.parse(path), base: '', ext: outExt });
+}
