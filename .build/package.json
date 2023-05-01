@@ -7,14 +7,15 @@
   "license": "ISC",
   "bin": "./_cli.mjs",
   "dependencies": {
-    "@types/minimist": "^1.2.2",
-    "chokidar": "^3.5.3",
     "commander": "^10.0.1",
     "common-path-prefix": "^3.0.0",
     "esbuild": "0.17.11",
     "glob": "^10.2.2",
-    "minimist": "^1.2.8",
     "playwright-test": "^8.2.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0"
   }
 }

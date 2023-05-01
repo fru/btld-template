@@ -6,17 +6,9 @@
   "scripts": {
     "cli": "npx -p ./.build -y build",
     "unittest": "npm run cli -- unittest src/1-base-store.md --watch",
-    "mocha": "mocha --watch ./dist/test.js",
-    "Todo--------------": "",
-    "literate-w": "npm run literate -- --watch",
     "types": "npm run literate && tsc -p build",
-    "bundle": "node build/build-bundle.mjs --watch --test",
     "test": "playwright-test test/specification/*.js --runner mocha --watch",
-    "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
-    "tdd-code": "npm run build -- literate/0-state.md --watch --tdd",
-    "tdd-test": "playwright-test dist/tdd.js --runner mocha --watch --cov",
-    "tdd": "concurrently --kill-others 'npm:tdd-*'",
-    "build-watch": "concurrently --kill-others \"node esbuild.mjs --watch\" \"npm run test\""
+    "bench": "playwright-test test/benchmark/bench1.js --runner benchmark"
   },
   "author": "",
   "license": "ISC",
@@ -24,17 +16,6 @@
     ".build"
   ],
   "dependencies": {
-    "@btld-web/build": "*",
-    "@types/chai": "^4.3.5",
-    "@types/minimist": "^1.2.2",
-    "@types/mocha": "^10.0.1",
-    "chai": "^4.3.7",
-    "chokidar": "^3.5.3",
-    "concurrently": "^7.6.0",
-    "esbuild": "0.17.11",
-    "minimist": "^1.2.8",
-    "mocha": "^10.2.0",
-    "playwright-test": "^8.2.0",
-    "typescript": "^5.0.4"
+    "@btld-web/build": "*"
   }
 }
