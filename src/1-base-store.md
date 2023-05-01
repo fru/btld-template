@@ -232,5 +232,14 @@ export class BaseStore {
 For testing purposes we export some additional variables
 
 ```typescript test
-console.log('Test code 3');
+import { testCache } from '../test/unittest/base-store-cache';
+import { testProxy } from '../test/unittest/base-store-proxy';
+import { testNormalization } from '../test/unittest/base-store-normalize';
+import { testFreeze } from '../test/unittest/base-store-freeze';
+import { testBaseStore } from '../test/unittest/base-store';
+testCache(Cache);
+testProxy(createProxy);
+testNormalization(normalizeUnchangedMarker, unchanged);
+testFreeze(freeze);
+testBaseStore(BaseStore);
 ```
