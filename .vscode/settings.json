@@ -27,6 +27,7 @@
     "prettier.arrowParens": "avoid",
     "cSpell.words": [
         "btld",
+        "Computables",
         "immer",
         "instanceof",
         "templating",

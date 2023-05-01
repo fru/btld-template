@@ -1,31 +1,35 @@
-The more useable state object
+# Data
 
-```typescript
-export class State extends StateMinimal {
-  __cacheGet = new Cache<Get>();
+This layer improves the practical usability of the minimal base store defined
+earlier. One way we accomplish this is by introducing "computables," which can
+be defined at the root of the store. They can then be accessed just like any
+other property. Computables produce results that are cached as long as the
+underlying data remains unchanged, and the results are also frozen to ensure
+consistency.
 
-  get(path: string) {
-    return createGet(path, this.__cacheGet)(this);
-  }
-  set(path: string, value: unknown) {
-    this.update(path, ({ parent, key }) => (parent[prop] = value));
-  }
-  map(path: string, action: (ctx: WriteCtx) => void) {
-    this.update(data => action(initialize(path, data)));
-  }
-  onChange() {
-    __cacheGet.clear();
-  }
-}
-```
+Another improvement over the base store is the ability to access data through
+simple path expressions, which can be used for both getting and setting data.
+These path expressions are also utilized in the HTML template for binding
+values, and they provide inline caching to improve access performance compared
+to naive programmatic access.
 
-Layer that manages computable's
+## Computable
+
+This layer manages computables using the `computable(state, comp)` function.
+When this function is called with a state, it returns a new state that includes
+additional computables. This enables multiple inheriting state objects with
+different computables to be created for each base state.
+
+Later in the framework, the `computable` function is also used to set the
+current index during a loop. This allows each web component to have a single
+base store, but still access a different item. As a result, this layer
+significantly simplifies the management of state within a web component.
 
 ```typescript
 type Computable = (state: State) => unknown;
 type ComputableObj = { [prop: string]: Computable };
 
-export function computed(state: State, comp: ComputableObj): State {
+function computable(state: State, comp: ComputableObj): State {
   let cacheResult = new Cache<unknown>();
   let cacheFrozen = null;
 
@@ -48,6 +52,31 @@ export function computed(state: State, comp: ComputableObj): State {
     });
   }
   return Object.setPrototypeOf({ root }, state);
+}
+```
+
+## Paths
+
+## Data
+
+The more useable state object
+
+```typescript
+export class State extends StateMinimal {
+  __cacheGet = new Cache<Get>();
+
+  get(path: string) {
+    return createGet(path, this.__cacheGet)(this);
+  }
+  set(path: string, value: unknown) {
+    this.update(path, ({ parent, key }) => (parent[prop] = value));
+  }
+  map(path: string, action: (ctx: WriteCtx) => void) {
+    this.update(data => action(initialize(path, data)));
+  }
+  onChange() {
+    __cacheGet.clear();
+  }
 }
 ```
 

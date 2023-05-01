@@ -215,17 +215,17 @@ export { Cache };
 export class BaseStore {
   __frozen = freeze({});
 
-  get(prop: string) {
+  root(prop: string) {
     return this.__frozen[prop];
   }
 
-  alter(action: (data: object) => void): void {
+  update(action: (data: object) => void): void {
     const root = createProxy(this.__frozen, new Cache());
     action(root!);
     this.__frozen = freeze(root);
   }
 
-  static frozen = (val: any) => val && val[frozen];
+  static isFrozen = (val: any) => val && val[frozen];
 }
 ```
 
