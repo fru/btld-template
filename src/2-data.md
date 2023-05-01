@@ -57,6 +57,10 @@ function computable(state: State, comp: ComputableObj): State {
 
 ## Paths
 
+### Parsing
+
+### Accessor
+
 ## Data
 
 The more useable state object
