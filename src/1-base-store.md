@@ -229,17 +229,24 @@ export class BaseStore {
 }
 ```
 
-For testing purposes we export some additional variables
+Now lets do some unittests for this file. This also test the non-exported
+members of this file.
 
 ```typescript test
-import { testCache } from '../test/unittest/base-store-cache';
+import { testCache } from '../test/unittest/base-store-cache.js';
+describe('Cache', () => testCache(Cache));
+
 import { testProxy } from '../test/unittest/base-store-proxy';
+describe('Proxy', () => testProxy(createProxy, Cache, unchanged));
+
 import { testNormalization } from '../test/unittest/base-store-normalize';
+describe('Normalize', () => {
+  testNormalization(normalizeUnchangedMarker, unchanged);
+});
+
 import { testFreeze } from '../test/unittest/base-store-freeze';
+describe('Freeze', () => testFreeze(freeze));
+
 import { testBaseStore } from '../test/unittest/base-store';
-testCache(Cache);
-testProxy(createProxy);
-testNormalization(normalizeUnchangedMarker, unchanged);
-testFreeze(freeze);
-testBaseStore(BaseStore);
+describe('Store', () => testBaseStore(BaseStore));
 ```

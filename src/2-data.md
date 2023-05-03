@@ -26,10 +26,10 @@ base store, but still access a different item. As a result, this layer
 significantly simplifies the management of state within a web component.
 
 ```typescript
-type Computable = (state: State) => unknown;
-type ComputableObj = { [prop: string]: Computable };
+type ComputableFunc = (state: State) => unknown;
+type Computables = { [prop: string]: ComputableFunc };
 
-function computable(state: State, comp: ComputableObj): State {
+function computable(state: State, comp: Computables): State {
   let cacheResult = new Cache<unknown>();
   let cacheFrozen = null;
 
@@ -56,6 +56,63 @@ function computable(state: State, comp: ComputableObj): State {
 ```
 
 ## Paths
+
+```typescript
+type Segment = { p?: string; ref?: number };
+type Path = { refs: string[]; path: Segment[] };
+
+// TODO cache
+function parsePath(input: string): Path {
+  let refs = [];
+  let path = input.split('/').map(function (p) {
+    if (!p.startsWith(':')) return { p };
+    refs.push(p.substring(1));
+    return { ref: refs.length - 1 };
+  });
+  return { refs, path };
+}
+
+function retrieveRoots({ refs, path }: Path, state: State) {
+  // TODO retrieve refs and check
+  // TOOD retrieve parent
+  return { parent, key, roots };
+}
+
+function compare(arr1: any[], arr2: any[]): boolean | undefined {
+  if (arr1 && arr2 && arr1.length === arr2.length) {
+    return arr1.every((_, i) => arr1[i] === arr2[i]);
+  }
+}
+
+// PROBLEM Path 'test' -> frozen: {state.root('test')
+// Proxy: {parent: proxy, key: 'test', value: proxy.test
+
+function accessor(path: string, initialize: boolean, cached: boolean) {
+  let parsed = parsePath(path);
+  let cachedRoots = [];
+  let cachedResult = undefined;
+
+  return (state: State) => {
+    let { value, key, roots } = retrieveRoots(parsed, state);
+    if (cached && compare(cachedRoots, roots)) return cachedResult;
+    cachedRoots = roots;
+
+    let value;
+    for (let { ref, p } of parsed.path) {
+    }
+
+    return (cachedResult = { parent, key, value });
+  };
+  // Retrieve Roots  => array of objects
+  // Compare to last array and return cached
+  //
+
+  let path = path.map(x => (x.ref ? retrieveRef(x) : x));
+  let parent, key, value;
+
+  return { parent, key, value };
+}
+```
 
 ### Parsing
 
@@ -102,14 +159,6 @@ type Segment = { p: string; ref?: true };
 type WriteCtx = { parent: object; prop: string | number };
 type Getter = () => unknown;
 type Writer = () => WriteCtx;
-
-function parsePath(input: string): Segment[] {
-  // TODO 2 - cache!
-  function section(p) {
-    return p.startsWith(':') ? { p: p.substring(1), ref: true } : { p };
-  }
-  return input.split('/').map(section);
-}
 
 function createGetter(path: string, cache: Cache<Getter>): Getter {
   return cache.caching(path, setCache => {
