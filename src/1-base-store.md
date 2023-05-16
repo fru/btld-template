@@ -9,7 +9,7 @@ data structure. Instead, a new frozen state is generated, and only the modified
 properties are updated, resulting in improved performance. This is heavily
 inspired by the amazing [immer.js](https://github.com/immerjs/immer) library.
 
-Since every change creates new frozen objects, we can simply use equality
+Since every change creates new frozen objects, we can use a single equality
 comparisons to determine if there are any changes in the current state graph.
 
 ## Other Frameworks
@@ -247,6 +247,6 @@ describe('Normalize', () => {
 import { testFreeze } from '../test/unittest/base-store-freeze';
 describe('Freeze', () => testFreeze(freeze));
 
-import { testBaseStore } from '../test/unittest/base-store';
+import { testBaseStore } from '../test/unittest/base-store-export';
 describe('Store', () => testBaseStore(BaseStore));
 ```
