@@ -29,7 +29,7 @@ function addAnimation(keyframe){
 		document.head.appendChild(document.createElement('style'));
 		sheet = getLastStylesheet();
 	}
-	sheet.insertRule(keyframe, sheet.cssRules.length);
+	sheet.insertRule(keyframe);
 }
 
 addAnimation('@keyframes btldcssvars {}');
@@ -75,6 +75,5 @@ x.addEventListener('animationend', (ev) => {
 
 });
 </script>
-
 
 
