@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export function literate({ prefix, paths }, out, languages, test, outExt) {
   if (test) languages = addTestLanguages(languages);
+  console.log('Out folder: ', out);
   paths.forEach(p => {
     let file = path.resolve(prefix, p);
     let head = header(path.join(prefix, p));
@@ -10,8 +11,8 @@ export function literate({ prefix, paths }, out, languages, test, outExt) {
     let outFile = path.resolve(out, p);
     outFile = path.format({ ...path.parse(outFile), base: '', ext: outExt });
     fs.writeFileSync(outFile, head + code, 'utf8');
+    console.log('Write: ', p);
   });
-  console.log('literate', files, out, languages, test);
 }
 
 export function mdCodeExtract(languages, test) {
