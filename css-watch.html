@@ -1,0 +1,80 @@
+<script>
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+    
+    const x = document.createElement('span');
+    document.body.appendChild(x);
+    document.body.style.setProperty('--blue', '5');
+    document.body.style.setProperty('--green', '5');
+    
+    function term(varName, computedStyle) {
+        const value = computedStyle.getPropertyValue('--' + varName);
+        const t = `var(--${varName}) - ${value}`;
+        const abs_sum = [ `max(${t}, 0)`, `max((${t}) * -1, 0)`];
+        return abs_sum;
+    }
+    
+    function bind(terms) {
+        return `calc(${terms.join(' + ')})`
+    }
+    
+    function getLastStylesheet() {
+        let sheets = document.styleSheets;
+        return sheets[sheets.length - 1];
+    }
+    
+    function addAnimation(keyframe){
+        let sheet = getLastStylesheet();
+        if (!sheet) {
+            document.head.appendChild(document.createElement('style'));
+            sheet = getLastStylesheet();
+        }
+        sheet.insertRule(keyframe, sheet.cssRules.length);
+    }
+    
+    addAnimation('@keyframes btldcssvars {}');
+    x.style.setProperty('animation', 'btldcssvars 100000s');
+    
+    function updateBind() {
+        let xComputedStyles = getComputedStyle(x);
+        x.style.setProperty('--bound-css-vars', bind([...term('blue', xComputedStyles), ...term('green', xComputedStyles)]));
+    }
+    
+    updateBind();
+    
+    x.style.setProperty('animation-delay', 'calc(var(--bound-css-vars) * 10000s)');
+    
+    
+    
+    let v = 0;
+    
+    const y = document.createElement('button');
+    document.body.appendChild(y);
+    y.innerHTML = 'Button +++';
+    y.addEventListener('click', () => {
+        window.startTime = Date.now();
+        document.body.style.setProperty('--blue', '' + v++);
+    });
+    
+    
+    const z = document.createElement('b');
+    document.body.appendChild(z);
+    
+    
+    x.addEventListener('animationend', (ev) => {
+        console.log(ev, 'END', Date.now() - window.startTime);
+        let blue = getComputedStyle(x).getPropertyValue('--blue');
+        console.log(blue);
+        z.innerHTML = blue;
+        
+        updateBind();
+        setTimeout(() => document.body.style.setProperty('--blue', '' + v++), 20);
+    });
+    
+    
+    
+    });
+    </script>
+    
+    
+    
