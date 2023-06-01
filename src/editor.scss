@@ -1,0 +1,145 @@
+
+.BoxShadowHelper(@level: 1){
+  & when (@level = 1) {
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  }
+  & when (@level = 2) {
+      box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  }
+  & when (@level = 3) {
+      box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+  }
+  & when (@level = 4) {
+      box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  }
+  & when (@level = 5) {
+      box-shadow: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+  }
+}
+
+
+
+body {
+  background-color: #e6e3df;
+  text-align: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 2px;
+  display: inline-block;
+  height: 300px;
+  margin: 1rem;
+  position: relative;
+  width: 300px;
+}
+
+.card-1 {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  width: calc(300px - 2rem);
+  height: 30px;
+  background-color: rgb(245, 245, 245);
+}
+
+.card-1:hover {
+  box-shadow: inset 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
+
+.card-2 {
+  box-shadow: inset 2px 2px 5px rgba(154, 147, 140, 0.5), 1px 1px 
+    4px rgba(255, 255, 255, 1);
+  background-color: #cfc7c1;
+}
+
+
+
+
+
+body {
+  background-color: #e6e3df;
+  text-align: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 2px;
+  display: inline-block;
+  height: 300px;
+  margin: 1rem;
+  position: relative;
+  width: 300px;
+}
+
+.card-1 {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  width: calc(300px - 2rem);
+  height: 30px;
+  background-color: rgba(255,255,255,0.9);
+}
+
+.card-2 {
+  border-radius: 3px;
+  box-shadow: 
+    inset 2px 2px 2.5px rgba(0,0,0,0.08),
+    inset 1px 1.6px 0px rgba(0,0,0,0.08),
+    1px 1px 2px rgba(255, 255, 255, 1);
+  background-color: #cfc7c1; 
+  /* C6D4C4 D2C4D4 */
+}
+
+
+
+
+
+
+<div class="card card-2">
+  
+  <div class="card card-1"></div>
+  <div class="card card-1 m1"></div>
+</div>
+
+
+
+
+body {
+  background-color: #e6e3df;
+  text-align: center;
+}
+
+.card {
+  background: #fff;
+  border-radius: 2px;
+  display: inline-block;
+  height: 300px;
+  position: relative;
+  width: 300px;
+}
+
+.card-1 {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  width: 300px;
+  height: 30px;
+  background-color: rgba(255,255,255,0.9);
+}
+
+.card-2 {
+  border-radius: 3px;
+  box-shadow: 
+    inset 2px 2px 7px rgba(0,0,0,0.2),
+    inset 1px 2px 3px rgba(0,0,0,0.08),
+    inset 1px 2px 1px rgba(0,0,0,0.08),
+    1px 1px 2px rgba(255, 255, 255, 1);
+  background-color: #cfc7c1; 
+  /* C6D4C4 D2C4D4 afccd3 */
+  margin: 1rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.m1 {
+  margin-left: 8px; 
+  width: calc(300px - 8px);
+}

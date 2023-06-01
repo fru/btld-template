@@ -210,6 +210,10 @@ were created. This class provides just two simple methods: one for retrieving
 the current frozen state, and another for altering it.
 
 ```typescript
+// Finally, let's define the BaseStore class for which all the previous
+// methods were created. This class provides just two simple methods: one
+// for retrieving the current frozen state, and another for altering it.
+
 export { Cache };
 
 export class BaseStore {
