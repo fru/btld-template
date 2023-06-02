@@ -23,7 +23,7 @@ services:
   build-editor:
     build:
       context: ../..
-      dockerfile: @btld-web/server/node.Dockerfile
+      dockerfile: ./@btld-web/server/node.Dockerfile
     container_name: btld-web-build-editor
     volumes:
       - ~/btld-web/:/usr/app/project
