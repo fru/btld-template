@@ -35,4 +35,7 @@ services:
 networks:
   server-net:
     external:
-      name: install_default 
+      name: install_default
+secrets:
+  MAIL_APP_PW:
+    external: true
