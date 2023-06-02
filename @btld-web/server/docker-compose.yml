@@ -10,6 +10,8 @@ services:
     volumes:
       - ~/btld-web/@btld-web/server/:/usr/app/project
     command: npm run express
+    networks:
+      - shared_net
   hocuspocus:
     build:
       context: .
@@ -20,6 +22,8 @@ services:
     volumes:
       - ~/btld-web/@btld-web/server/:/usr/app/project
     command: npm run hocuspocus
+    networks:
+      - shared_net
   build-editor:
     build:
       context: ../..
@@ -28,3 +32,6 @@ services:
     volumes:
       - ~/btld-web/:/usr/app/project
     command: npm run build-editor
+networks:
+  shared_net:
+    name: shared_network
