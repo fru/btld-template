@@ -8,7 +8,7 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ~/btld-web/@btld-web/server/:/usr/app/server
+      - ~/btld-web/@btld-web/server/:/usr/app/project
     command: npm run express
   hocuspocus:
     build:
@@ -18,7 +18,7 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - ~/btld-web/@btld-web/server/:/usr/app/server
+      - ~/btld-web/@btld-web/server/:/usr/app/project
     command: npm run hocuspocus
   build-editor:
     build:
