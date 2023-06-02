@@ -3,7 +3,7 @@ services:
   express:
     build:
       context: .
-      dockerfile: express.Dockerfile
+      dockerfile: server.Dockerfile
     container_name: btld-web-express
     ports:
       - "4000:4000"
@@ -13,10 +13,18 @@ services:
   hocuspocus:
     build:
       context: .
-      dockerfile: hocuspocus.Dockerfile
+      dockerfile: server.Dockerfile
     container_name: btld-web-hocuspocus
     ports:
       - "4001:4001"
     volumes:
       - ~/btld-web/@btld-web/server/:/usr/app/server
     command: npm run hocuspocus
+  build-editor:
+    build:
+      context: .
+      dockerfile: main.Dockerfile
+    container_name: btld-web-build-editor
+    volumes:
+      - ~/btld-web/:/usr/app/project
+    command: npm run build-editor
