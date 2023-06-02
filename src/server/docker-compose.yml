@@ -8,5 +8,7 @@ services:
       dockerfile: express.Dockerfile
     container_name: btld-express-server
     ports:
-        - "4000:4000"
+      - "4000:4000"
+    volumes:
+      - ~/btld-web/src/server/:/usr/app/server
     command: npm run express
