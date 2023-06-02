@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: express.Dockerfile
-    container_name: btld-express-server
+    container_name: btld-web-express
     ports:
       - "4000:4000"
     volumes:
@@ -14,7 +14,7 @@ services:
     build:
       context: .
       dockerfile: hocuspocus.Dockerfile
-    container_name: btld-hocuspocus-server
+    container_name: btld-web-hocuspocus
     ports:
       - "4001:4001"
     volumes:
