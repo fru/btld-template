@@ -14,6 +14,9 @@ services:
       - server-net
     secrets:
       - MAIL_APP_PW
+      - CLOUDFLARE_EMAIL
+      - CLOUDFLARE_KEY
+      - CLOUDFLARE_ZONE
   hocuspocus:
     build:
       context: .
@@ -41,3 +44,9 @@ networks:
 secrets:
   MAIL_APP_PW:
     file: ~/.install/secrets/MAIL_APP_PW.txt
+  CLOUDFLARE_EMAIL:
+    file: ~/.install/secrets/CLOUDFLARE_EMAIL.txt
+  CLOUDFLARE_KEY:
+    file: ~/.install/secrets/CLOUDFLARE_KEY.txt
+  CLOUDFLARE_ZONE:
+    file: ~/.install/secrets/CLOUDFLARE_ZONE.txt
