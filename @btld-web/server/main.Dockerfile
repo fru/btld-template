@@ -1,5 +1,5 @@
 FROM node:lts-alpine
-WORKDIR /usr/app/server
+WORKDIR /usr/app/project
 COPY ../../package*.json ../
 RUN cd ..
 RUN npm install
