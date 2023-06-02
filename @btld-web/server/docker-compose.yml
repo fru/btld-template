@@ -10,5 +10,5 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ~/btld-web/src/server/:/usr/app/server
+      - ~/btld-web/@btld-web/server/:/usr/app/server
     command: npm run express
