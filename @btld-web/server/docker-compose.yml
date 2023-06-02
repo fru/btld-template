@@ -12,6 +12,8 @@ services:
     command: npm run express
     networks:
       - server-net
+    secrets:
+      - MAIL_APP_PW
   hocuspocus:
     build:
       context: .
