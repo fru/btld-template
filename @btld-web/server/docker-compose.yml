@@ -40,4 +40,4 @@ networks:
       name: install_default
 secrets:
   MAIL_APP_PW:
-    file: ../.install/MAIL_APP_PW.txt
+    file: ~/.install/secrets/MAIL_APP_PW.txt
