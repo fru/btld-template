@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "express": "node express.mjs"
+    "express": "node express.mjs",
+    "hocuspocus": "node hocuspocus.mjs"
   },
   "author": "",
   "license": "ISC",
