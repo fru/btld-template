@@ -1,4 +1,4 @@
 FROM node:lts-alpine
 WORKDIR /usr/app
-COPY /root/btld-web/src/server ./
+COPY . ./
 RUN npm install
