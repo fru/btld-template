@@ -6,8 +6,6 @@ services:
     build:
       context: .
       dockerfile: express.Dockerfile
-    volumes:
-      - ~/btld-web/src/server/:/usr/server
     container_name: btld-express-server
     ports:
         - "4000:4000"
