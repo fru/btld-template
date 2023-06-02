@@ -5,7 +5,7 @@ const app = express();
 const port = 4000;
 
 app.get('/', (req, res) => {
-  res.send('Hello World!' + secrets.MAIL_APP_PW);
+  res.send('Hello World!' + secrets.CLOUDFLARE_EMAIL);
 });
 
 app.listen(port, () => {
