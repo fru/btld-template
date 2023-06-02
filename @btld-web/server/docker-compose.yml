@@ -1,14 +1,38 @@
 version: "3"
 services:
   express:
-    environment:
-      - NODE_ENV=development
     build:
       context: .
-      dockerfile: express.Dockerfile
-    container_name: btld-express-server
+      dockerfile: node.Dockerfile
+    container_name: btld-web-express
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     volumes:
-      - ~/btld-web/src/server/:/usr/app/server
+      - ~/btld-web/@btld-web/server/:/usr/app/project
     command: npm run express
+    networks:
+      - server-net
+  hocuspocus:
+    build:
+      context: .
+      dockerfile: node.Dockerfile
+    container_name: btld-web-hocuspocus
+    ports:
+      - "127.0.0.1:4001:4001"
+    volumes:
+      - ~/btld-web/@btld-web/server/:/usr/app/project
+    command: npm run hocuspocus
+    networks:
+      - server-net
+  build-editor:
+    build:
+      context: ../..
+      dockerfile: ./@btld-web/server/node.Dockerfile
+    container_name: btld-web-build-editor
+    volumes:
+      - ~/btld-web/:/usr/app/project
+    command: npm run build-editor
+networks:
+  server-net:
+    external:
+      name: install_default 

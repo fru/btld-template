@@ -8,7 +8,8 @@
     "unittest": "npm run cli -- unittest src/1-base-store.md --watch",
     "literate": "npm run cli -- literate src/1-base-store.md",
     "test": "playwright-test test/specification/*.js --runner mocha --watch",
-    "bench": "playwright-test test/benchmark/bench1.js --runner benchmark"
+    "bench": "playwright-test test/benchmark/bench1.js --runner benchmark",
+    "build-editor": "ls"
   },
   "author": "",
   "license": "ISC",

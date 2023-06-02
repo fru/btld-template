@@ -1,7 +1,7 @@
 import { Hocuspocus } from '@hocuspocus/server';
 
 const server = new Hocuspocus({
-  port: 1234,
+  port: 4001,
 });
 
 server.listen();
