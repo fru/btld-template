@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "express": "bash"
+    "express": "ls"
   },
   "author": "",
   "license": "ISC",
