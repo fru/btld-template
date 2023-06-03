@@ -14,7 +14,8 @@
   "author": "",
   "license": "ISC",
   "workspaces": [
-    ".build"
+    ".build",
+    "@btld-web/editor"
   ],
   "dependencies": {
     "@btld-web/build": "*"
