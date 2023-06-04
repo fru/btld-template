@@ -37,7 +37,8 @@ services:
     volumes:
       - ~/btld-web/:/usr/app/project
     command:
-      - /bin/sh -c
+      - /bin/sh
+      - -c
       - |
         git pull
         npm install
