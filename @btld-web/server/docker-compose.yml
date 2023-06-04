@@ -30,13 +30,18 @@ services:
     networks:
       - server-net
   build-editor:
-    build:
-      context: ../..
-      dockerfile: ./@btld-web/server/node.Dockerfile
+    image: alpine
     container_name: btld-web-build-editor
     volumes:
       - ~/btld-web/:/usr/app/project
-    command: npm run build -w @btld-web/editor
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cd /usr/app/project
+        git pull
+        npm install
+        npm run build -w @btld-web/editor
 networks:
   server-net:
     external:
