@@ -1,6 +1,6 @@
 FROM node:lts-alpine
 WORKDIR /usr/app/project
-RUN apt-get install git -y
+RUN apk add git
 COPY package*.json ../
 RUN cd ..
 RUN npm install
