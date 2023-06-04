@@ -1,4 +1,4 @@
-version: "3.1"
+version: "3.7"
 services:
   express:
     build:
@@ -8,8 +8,8 @@ services:
     ports:
       - "127.0.0.1:4000:4000"
     volumes:
-      - ~/btld-web/@btld-web/server/:/usr/app/project
-    command: npm run express
+      - ~/btld-web/:/project
+    command: npm run express -w @btld-web/server
     networks:
       - server-net
     secrets:
@@ -25,18 +25,24 @@ services:
     ports:
       - "127.0.0.1:4001:4001"
     volumes:
-      - ~/btld-web/@btld-web/server/:/usr/app/project
-    command: npm run hocuspocus
+      - ~/btld-web/:/project
+    command: npm run hocuspocus -w @btld-web/server
     networks:
       - server-net
   build-editor:
     build:
-      context: ../..
-      dockerfile: ./@btld-web/server/node.Dockerfile
-    container_name: btld-web-build-editor
+      context: .
+      dockerfile: node.Dockerfile
+    container_name: btld-web-build
     volumes:
-      - ~/btld-web/:/usr/app/project
-    command: npm run build -w @btld-web/editor
+      - ~/btld-web/:/project
+    command:
+      - /bin/sh
+      - -c
+      - |
+        git pull
+        npm install
+        npm run build -w @btld-web/editor
 networks:
   server-net:
     external:
