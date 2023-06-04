@@ -23,7 +23,7 @@ services:
       dockerfile: node.Dockerfile
     container_name: btld-web-hocuspocus
     ports:
-      - "4001:4001"
+      - "127.0.0.1:4001:4001"
     volumes:
       - ~/btld-web/:/project
     command: npm run hocuspocus -w @btld-web/server
