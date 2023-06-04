@@ -36,7 +36,6 @@ services:
     container_name: btld-web-build-editor
     volumes:
       - ~/btld-web/:/usr/app/project
-    working_dir: /usr/app/project
     command:
       - /bin/sh -c
       - |
