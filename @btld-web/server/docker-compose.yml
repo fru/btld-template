@@ -30,15 +30,18 @@ services:
     networks:
       - server-net
   build-editor:
-    image: node:lts-alpine
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM node:lts-alpine
+        RUN apt-get install git -y
     container_name: btld-web-build-editor
     volumes:
       - ~/btld-web/:/usr/app/project
+    working_dir: /usr/app/project
     command:
-      - /bin/sh
-      - -c
+      - /bin/sh -c
       - |
-        cd /usr/app/project
         git pull
         npm install
         npm run build -w @btld-web/editor
