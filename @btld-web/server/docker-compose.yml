@@ -32,9 +32,7 @@ services:
   build-editor:
     build:
       context: .
-      dockerfile_inline: |
-        FROM node:lts-alpine
-        RUN apt-get install git -y
+      dockerfile: node.Dockerfile
     container_name: btld-web-build-editor
     volumes:
       - ~/btld-web/:/usr/app/project
