@@ -9,7 +9,7 @@ services:
       - "127.0.0.1:4000:4000"
     volumes:
       - ~/btld-web/:/project
-    command: npm run express -w @btld-web/service
+    command: npm run express -w @btld-web/server
     networks:
       - server-net
     secrets:
@@ -26,7 +26,7 @@ services:
       - "127.0.0.1:4001:4001"
     volumes:
       - ~/btld-web/:/project
-    command: npm run hocuspocus -w @btld-web/service
+    command: npm run hocuspocus -w @btld-web/server
     networks:
       - server-net
   build-editor:
