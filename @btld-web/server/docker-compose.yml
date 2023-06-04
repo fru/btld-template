@@ -30,7 +30,7 @@ services:
     networks:
       - server-net
   build-editor:
-    image: alpine
+    image: node:lts-alpine
     container_name: btld-web-build-editor
     volumes:
       - ~/btld-web/:/usr/app/project
