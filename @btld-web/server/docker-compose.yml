@@ -33,7 +33,7 @@ services:
     build:
       context: .
       dockerfile: node.Dockerfile
-    container_name: btld-web-build-editor
+    container_name: btld-web-build
     volumes:
       - ~/btld-web/:/project
     command:
