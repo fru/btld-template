@@ -1,6 +1,7 @@
 import { Hocuspocus } from '@hocuspocus/server';
 
-const server = Hocuspocus.configure({
+const server = new Hocuspocus({
+  port: 4001,
   async onAuthenticate(data) {
     const { token } = data;
 
@@ -19,4 +20,4 @@ const server = Hocuspocus.configure({
   },
 });
 
-server.listen(4001);
+server.listen();
