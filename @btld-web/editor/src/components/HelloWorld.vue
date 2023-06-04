@@ -64,6 +64,7 @@ export default {
       name: 'room1',
       document: ydoc,
       url: 'wss://rueberg.eu/hocuspocus',
+      parameters: {}
     })
 
     this.provider.on('status', event => {
