@@ -63,7 +63,7 @@ export default {
     this.provider = new HocuspocusProvider({
       name: 'room1',
       document: ydoc,
-      url: 'wss://rueberg.eu/hocuspocus',
+      url: 'wss://185.207.250.251:4001',
       parameters: {}
     })
 
