@@ -63,7 +63,7 @@ export default {
     this.provider = new HocuspocusProvider({
       name: 'room1',
       document: ydoc,
-      url: 'ws://127.0.0.1:443',
+      url: 'ws://120.4.4.78:443',
     })
 
     this.provider.on('status', event => {
