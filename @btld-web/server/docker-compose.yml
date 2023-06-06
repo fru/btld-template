@@ -1,10 +1,10 @@
 version: "3.7"
 services:
   express:
+    container_name: btld-web-express
     build:
       context: .
       dockerfile: node.Dockerfile
-    container_name: btld-web-express
     ports:
       - "127.0.0.1:4000:4000"
     volumes:
@@ -18,10 +18,10 @@ services:
       - CLOUDFLARE_KEY
       - CLOUDFLARE_ZONE
   hocuspocus:
+    container_name: btld-web-hocuspocus
     build:
       context: .
       dockerfile: node.Dockerfile
-    container_name: btld-web-hocuspocus
     ports:
       - "127.0.0.1:4001:4001"
     volumes:
@@ -30,10 +30,10 @@ services:
     networks:
       - server-net
   build-editor:
+    container_name: btld-web-build
     build:
       context: .
       dockerfile: node.Dockerfile
-    container_name: btld-web-build
     volumes:
       - ~/btld-web/:/project
     command:
@@ -43,6 +43,29 @@ services:
         git pull
         npm install
         npm run build -w @btld-web/editor
+  pg-database:
+    container_name: btld-web-db
+    image: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+	  volumes:
+      - /data/pg_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+  pg-admin:
+    container_name: btld-web-db-admin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+	volumes:
+      - /data/pg_admin:/var/lib/pgadmin
 networks:
   server-net:
     external:
