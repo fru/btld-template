@@ -1,0 +1,81 @@
+<mjml>
+  <mj-head>
+    <mj-font href="https://fonts.googleapis.com/css?family=Kanit:normal,italic,bold&display=swap" name="Kanit"></mj-font>
+    <mj-attributes>
+      <mj-text color="#011F3C"></mj-text>
+      <mj-all font-family="'Kanit', 'Helvetica', 'Arial', sans-serif"></mj-all>
+      <mj-button background-color="#2191FB"></mj-button>
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f6f6f6">
+    <mj-section background-color="#ffffff" border-bottom="none" border-left="none" border-right="none" border-top="8px solid #2191FB" padding-bottom="60px" padding-left="60px" padding-right="60px" padding-top="0px" padding="0px">
+      <mj-column padding="0">
+        <mj-image border-radius="0px 0px 8px 8px" padding-bottom="0px" padding-left="0px" padding-right="0px" padding-top="0px" padding="0px" src="https://cdn.getvero.com/dd-editor/templates/webinar-invitation/brand.png" width="80px"></mj-image>
+        <mj-spacer height="40px"></mj-spacer>
+        <mj-text align="center" color="#808F9D" font-size="14px" padding="10px">
+          SPECIAL WEBINAR
+        </mj-text>
+        <mj-text align="center" font-size="54px" line-height="1.25" padding="0px">
+          <strong>Join us for a special event</strong><br /><strong></strong>
+        </mj-text>
+        <mj-text align="center" font-size="20px" line-height="1.5" padding="10px">
+          March 28th - 30th<br />Live in APAC and EMEA timezones<br /><br />Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.
+        </mj-text>
+        <mj-spacer height="24px"></mj-spacer>
+        <mj-button border-radius="30px" font-size="20px" line-height="1.5" padding="0px">
+          <strong>RSVP now</strong>
+        </mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#B2ECE1" padding-bottom="4px" padding-left="60px" padding-right="60px" padding-top="60px" padding="60px">
+      <mj-column padding="0">
+        <mj-text align="center" font-size="36px" line-height="1.5" padding="0px">
+          <strong>Meet the speakers</strong>
+        </mj-text>
+        <mj-spacer height="24px"></mj-spacer>
+        <mj-image padding="0px" src="https://cdn.getvero.com/dd-editor/templates/webinar-invitation/hero.png" width="476px"></mj-image>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#B2ECE1" padding-bottom="60px" padding-left="50px" padding-right="50px" padding-top="4px" padding="20px">
+      <mj-column padding="0">
+        <mj-text align="center" font-family="'Kanit', 'Helvetica', 'Arial', sans-serif" font-size="20px" line-height="1.5" padding="0px">
+          <strong>Alexandre Paiva</strong>
+        </mj-text>
+        <mj-text align="center" font-family="'Kanit', 'Helvetica', 'Arial', sans-serif" font-size="18px" line-height="1.5" padding="0px">
+          Position
+        </mj-text>
+      </mj-column>
+      <mj-column padding="0">
+        <mj-text align="center" font-family="'Kanit', 'Helvetica', 'Arial', sans-serif" font-size="20px" line-height="1.5" padding="0px">
+          <strong>Alexandre Paiva</strong>
+        </mj-text>
+        <mj-text align="center" font-family="'Kanit', 'Helvetica', 'Arial', sans-serif" font-size="18px" line-height="1.5" padding="0px">
+          Position
+        </mj-text>
+      </mj-column>
+      <mj-column padding="0">
+        <mj-text align="center" font-family="'Kanit', 'Helvetica', 'Arial', sans-serif" font-size="20px" line-height="1.5" padding="0px">
+          <strong>Alexandre Paiva</strong>
+        </mj-text>
+        <mj-text align="center" font-family="'Kanit', 'Helvetica', 'Arial', sans-serif" font-size="18px" line-height="1.5" padding="0px">
+          Position
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section padding-bottom="40px" padding-left="60px" padding-right="60px" padding-top="40px" padding="60px">
+      <mj-column padding="0">
+        <mj-image padding="0px" src="https://cdn.getvero.com/dd-editor/templates/webinar-invitation/logo.png" width="36px"></mj-image>
+        <mj-spacer height="32px"></mj-spacer>
+        <mj-social font-size="15px" icon-padding="5px" icon-size="30px" mode="horizontal" padding="0px">
+          <mj-social-element src="https://cdn.getvero.com/dd-editor/ui-assets/icons/social/facebook.png" alt="https://www.facebook.com/" href="https://www.facebook.com/" name="facebook-noshare" title="https://www.facebook.com/"></mj-social-element>
+          <mj-social-element src="https://cdn.getvero.com/dd-editor/ui-assets/icons/social/google-plus.png" alt="https://www.google.com/" href="https://www.google.com/" name="google-noshare" title="https://www.google.com/"></mj-social-element>
+          <mj-social-element src="https://cdn.getvero.com/dd-editor/ui-assets/icons/social/twitter.png" alt="https://www.twitter.com/" href="https://www.twitter.com/" name="twitter-noshare" title="https://www.twitter.com/"></mj-social-element>
+        </mj-social>
+        <mj-spacer height="16px"></mj-spacer>
+        <mj-text align="center" font-size="14px" line-height="1.5" padding="0px">
+          Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.<br /><br />Unsubscribe
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

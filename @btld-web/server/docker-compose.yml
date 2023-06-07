@@ -68,8 +68,8 @@ services:
     networks:
       - server-net
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_DEFAULT_EMAIL: ${POSTGRES_USER}
+      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
 networks:
   server-net:
     external:
