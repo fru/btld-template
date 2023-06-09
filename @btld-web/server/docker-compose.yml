@@ -2,84 +2,32 @@ version: "3.7"
 services:
   express:
     container_name: btld-web-express
-    build:
-      context: .
-      dockerfile: node.Dockerfile
+    image: timbru31/node-alpine-git:20
+    restart: always
     ports:
-      - "127.0.0.1:4000:4000"
+      - "433:433"
+    working_dir: /data/btld-web
     volumes:
-      - ~/btld-web/:/project
+      - /data/btld-web:/data/btld-web
+      - /data/server:/data/server
+    env_file:
+      - /data/config.env
     command: npm run express -w @btld-web/server
     networks:
-      - server-net
-    secrets:
-      - MAIL_APP_PW
-      - CLOUDFLARE_EMAIL
-      - CLOUDFLARE_KEY
-      - CLOUDFLARE_ZONE
-  hocuspocus:
-    container_name: btld-web-hocuspocus
-    build:
-      context: .
-      dockerfile: node.Dockerfile
-    ports:
-      - "127.0.0.1:4001:4001"
-    volumes:
-      - ~/btld-web/:/project
-    command: npm run hocuspocus -w @btld-web/server
-    networks:
-      - server-net
-  build-editor:
-    container_name: btld-web-build
-    build:
-      context: .
-      dockerfile: node.Dockerfile
-    volumes:
-      - ~/btld-web/:/project
-    command:
-      - /bin/sh
-      - -c
-      - |
-        git pull
-        npm install
-        npm run build -w @btld-web/editor
-  pg-database:
-    container_name: btld-web-db
-    image: postgres
+      - btld-net
+  couchdb:
+    container_name: btld-web-couchdb
+    image: couchdb
     restart: always
     ports:
-      - "127.0.0.1:5432:5432"
+      - "5984:5984"
     volumes:
-      - /data/pg_data:/var/lib/postgresql/data
+      - /data/couchdb:/opt/couchdb/data
+    env_file:
+      - /data/config.env
     networks:
-      - server-net
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-  pg-admin:
-    container_name: btld-web-db-admin
-    image: dpage/pgadmin4
-    restart: always
-    volumes:
-      - /data/pg_admin:/var/lib/pgadmin
-    ports:
-      - "5050:80"
-    networks:
-      - server-net
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${POSTGRES_USER}
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}
+      - btld-net
 networks:
-  server-net:
-    external:
-      name: install_default
-secrets:
-  MAIL_APP_PW:
-    file: ~/.install/secrets/MAIL_APP_PW.txt
-  CLOUDFLARE_EMAIL:
-    file: ~/.install/secrets/CLOUDFLARE_EMAIL.txt
-  CLOUDFLARE_KEY:
-    file: ~/.install/secrets/CLOUDFLARE_KEY.txt
-  CLOUDFLARE_ZONE:
-    file: ~/.install/secrets/CLOUDFLARE_ZONE.txt
+  btld-net:
+    driver: bridge
+    name: btld-net
